@@ -9,6 +9,8 @@ public struct Player: Identifiable, Codable, Equatable {
     public var hand: [Card]
     public var score: Int
     public var completedStockCards: Int
+    public var cardsPlayed: Int
+    public var cardsDiscarded: Int
 
     public init(
         id: UUID = UUID(),
@@ -18,7 +20,9 @@ public struct Player: Identifiable, Codable, Equatable {
         discardPiles: [[Card]] = Array(repeating: [], count: 4),
         hand: [Card] = [],
         score: Int = 0,
-        completedStockCards: Int = 0
+        completedStockCards: Int = 0,
+        cardsPlayed: Int = 0,
+        cardsDiscarded: Int = 0
     ) {
         self.id = id
         self.name = name
@@ -28,6 +32,8 @@ public struct Player: Identifiable, Codable, Equatable {
         self.hand = hand
         self.score = score
         self.completedStockCards = completedStockCards
+        self.cardsPlayed = cardsPlayed
+        self.cardsDiscarded = cardsDiscarded
     }
 
     public var stockTopCard: Card? { stockPile.last }

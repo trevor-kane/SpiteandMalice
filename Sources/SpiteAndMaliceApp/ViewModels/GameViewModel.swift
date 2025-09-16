@@ -16,15 +16,44 @@ final class GameViewModel: ObservableObject {
         let suggestedPileIndex: Int?
     }
 
-    @Published private(set) var state: GameState
+    struct PlayerSummary: Identifiable, Equatable {
+        let id: UUID
+        let name: String
+        let isHuman: Bool
+        let stockRemaining: Int
+        let discardCardCount: Int
+        let handCount: Int
+        let completedStockCards: Int
+        let cardsPlayed: Int
+        let cardsDiscarded: Int
+        let isWinner: Bool
+    }
+
+    struct GameSummary: Equatable {
+        let winner: PlayerSummary
+        let totalTurns: Int
+        let buildPilesCompleted: Int
+        let players: [PlayerSummary]
+    }
+
+    @Published private(set) var state: GameState {
+        didSet { updateUndoAvailability() }
+    }
     @Published var selection: CardSelection?
     @Published var hint: Hint?
     @Published var statusBanner: String = ""
     @Published var isAITakingTurn: Bool = false
     @Published var showsHelp: Bool = false
+    @Published private(set) var canUndoTurn: Bool = false
 
     private let engine = GameEngine()
     private var aiTask: Task<Void, Never>?
+    private var undoStack: [GameState] = [] {
+        didSet { updateUndoAvailability() }
+    }
+    private var hasPlayedStockThisTurn: Bool = false {
+        didSet { updateUndoAvailability() }
+    }
 
     init() {
         state = GameState.empty()
@@ -49,6 +78,7 @@ final class GameViewModel: ObservableObject {
             hint = nil
             statusBanner = "Good luck! Empty your stock pile first to win."
             engine.prepareTurn(state: &state)
+            prepareUndoForCurrentPlayer()
             updateStatusBanner()
             if !state.currentPlayer.isHuman {
                 scheduleAITurn()
@@ -93,11 +123,22 @@ final class GameViewModel: ObservableObject {
         guard state.status == .playing else { return }
         guard state.currentPlayer.isHuman else { return }
         guard let selection else { return }
+        let origin = selection.origin
+        let previousState = state
         do {
-            _ = try engine.play(origin: selection.origin, toBuildPile: pileIndex, state: &state)
+            _ = try engine.play(origin: origin, toBuildPile: pileIndex, state: &state)
             self.selection = nil
             hint = nil
+            if case .stock = origin {
+                undoStack.removeAll()
+                hasPlayedStockThisTurn = true
+            } else if state.status == .playing && !hasPlayedStockThisTurn {
+                undoStack.append(previousState)
+            }
             updateStatusBanner()
+            if state.status == .playing, state.currentPlayer.isHuman {
+                statusBanner = "Card played. Continue your turn."
+            }
         } catch {
             statusBanner = error.localizedDescription
         }
@@ -110,11 +151,18 @@ final class GameViewModel: ObservableObject {
             statusBanner = "Select a card from your hand to discard."
             return
         }
+        let previousState = state
         do {
             _ = try engine.discard(handIndex: handIndex, toDiscardPile: discardIndex, state: &state)
             self.selection = nil
             hint = nil
+            if state.status == .playing && !hasPlayedStockThisTurn {
+                undoStack.append(previousState)
+            }
             updateStatusBanner()
+            if state.status == .playing {
+                statusBanner = "Card discarded. You can end your turn or undo."
+            }
         } catch {
             statusBanner = error.localizedDescription
         }
@@ -138,6 +186,18 @@ final class GameViewModel: ObservableObject {
             return
         }
         advanceToNextPlayer()
+    }
+
+    func undoLastAction() {
+        guard canUndoTurn else { return }
+        guard state.status == .playing else { return }
+        guard state.currentPlayer.isHuman else { return }
+        guard let previousState = undoStack.popLast() else { return }
+        state = previousState
+        selection = nil
+        hint = nil
+        updateStatusBanner()
+        statusBanner = "Last move undone. Continue your turn."
     }
 
     func provideHint() {
@@ -187,16 +247,59 @@ final class GameViewModel: ObservableObject {
         state.activityLog.suffix(6)
     }
 
+    var gameSummary: GameSummary? {
+        guard case let .finished(winnerID) = state.status,
+              let _ = state.players.first(where: { $0.id == winnerID }) else {
+            return nil
+        }
+
+        let buildClears = state.buildPiles.reduce(0) { $0 + $1.clearedSets }
+
+        let playerSummaries = state.players.map { player -> PlayerSummary in
+            let discardCount = player.discardPiles.reduce(0) { $0 + $1.count }
+            return PlayerSummary(
+                id: player.id,
+                name: player.name,
+                isHuman: player.isHuman,
+                stockRemaining: player.stockPile.count,
+                discardCardCount: discardCount,
+                handCount: player.hand.count,
+                completedStockCards: player.completedStockCards,
+                cardsPlayed: player.cardsPlayed,
+                cardsDiscarded: player.cardsDiscarded,
+                isWinner: player.id == winnerID
+            )
+        }
+
+        guard let winnerSummary = playerSummaries.first(where: { $0.id == winnerID }) else {
+            return nil
+        }
+
+        return GameSummary(
+            winner: winnerSummary,
+            totalTurns: state.turn,
+            buildPilesCompleted: buildClears,
+            players: playerSummaries
+        )
+    }
+
     private func advanceToNextPlayer() {
         selection = nil
         hint = nil
+        undoStack.removeAll()
+        hasPlayedStockThisTurn = false
         engine.advanceTurn(state: &state)
         engine.prepareTurn(state: &state)
+        if state.status == .playing {
+            prepareUndoForCurrentPlayer()
+        }
         updateStatusBanner()
-        if state.currentPlayer.isHuman {
-            statusBanner = "Your turn. Play or discard."
-        } else {
-            scheduleAITurn()
+        if state.status == .playing {
+            if state.currentPlayer.isHuman {
+                statusBanner = "Your turn. Play or discard."
+            } else {
+                scheduleAITurn()
+            }
         }
     }
 
@@ -238,6 +341,15 @@ final class GameViewModel: ObservableObject {
                 self.isAITakingTurn = false
             }
         }
+    }
+
+    private func prepareUndoForCurrentPlayer() {
+        undoStack.removeAll()
+        hasPlayedStockThisTurn = false
+    }
+
+    private func updateUndoAvailability() {
+        canUndoTurn = !undoStack.isEmpty && !hasPlayedStockThisTurn && state.status == .playing && state.currentPlayer.isHuman
     }
 
     private func updateStatusBanner() {

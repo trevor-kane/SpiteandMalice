@@ -143,32 +143,30 @@ public struct GameEngine {
         guard state.phase == .acting || state.phase == .drawing else { throw EngineError.invalidPhase }
         guard state.buildPiles.indices.contains(pileIndex) else { throw EngineError.invalidTarget }
 
-        var sourceCard: Card
+        let playerIndex = origin.playerIndex
+        guard state.players.indices.contains(playerIndex) else {
+            throw EngineError.invalidOrigin
+        }
+
+        var player = state.players[playerIndex]
+        let sourceCard: Card
         switch origin {
-        case let .stock(playerIndex):
-            guard var stock = state.players[safe: playerIndex]?.stockPile, !stock.isEmpty else {
-                throw EngineError.noCardAvailable
-            }
-            sourceCard = stock.removeLast()
-            state.players[playerIndex].stockPile = stock
-            state.players[playerIndex].completedStockCards += 1
-        case let .hand(playerIndex, handIndex):
-            guard var hand = state.players[safe: playerIndex]?.hand, hand.indices.contains(handIndex) else {
-                throw EngineError.noCardAvailable
-            }
-            sourceCard = hand.remove(at: handIndex)
-            state.players[playerIndex].hand = hand
-        case let .discard(playerIndex, pileIndex, depth):
-            guard depth == 0 else { throw EngineError.invalidOrigin }
-            guard var piles = state.players[safe: playerIndex]?.discardPiles, piles.indices.contains(pileIndex) else {
-                throw EngineError.invalidOrigin
-            }
-            guard var targetPile = piles[safe: pileIndex], let card = targetPile.popLast() else {
+        case .stock:
+            guard let card = player.stockPile.last else {
                 throw EngineError.noCardAvailable
             }
             sourceCard = card
-            piles[pileIndex] = targetPile
-            state.players[playerIndex].discardPiles = piles
+        case let .hand(_, handIndex):
+            guard player.hand.indices.contains(handIndex) else {
+                throw EngineError.noCardAvailable
+            }
+            sourceCard = player.hand[handIndex]
+        case let .discard(_, discardIndex, depth):
+            guard depth == 0 else { throw EngineError.invalidOrigin }
+            guard player.discardPiles.indices.contains(discardIndex), let card = player.discardPiles[discardIndex].last else {
+                throw EngineError.noCardAvailable
+            }
+            sourceCard = card
         }
 
         var targetPile = state.buildPiles[pileIndex]
@@ -184,6 +182,18 @@ public struct GameEngine {
         let playedCard = PlayedCard(card: sourceCard, resolvedValue: resolvedValue)
         targetPile.append(playedCard)
 
+        switch origin {
+        case .stock:
+            player.stockPile.removeLast()
+            player.completedStockCards += 1
+        case let .hand(_, handIndex):
+            player.hand.remove(at: handIndex)
+        case let .discard(_, discardIndex, _):
+            player.discardPiles[discardIndex].removeLast()
+        }
+        player.cardsPlayed += 1
+        state.players[playerIndex] = player
+
         var clearedCards: [Card] = []
         var didComplete = false
         if targetPile.isComplete {
@@ -196,7 +206,7 @@ public struct GameEngine {
 
         var didEmptyStock = false
         if case .stock = origin {
-            if state.players[state.currentPlayerIndex].stockPile.isEmpty {
+            if player.stockPile.isEmpty {
                 didEmptyStock = true
                 state.activityLog.append(GameEvent(message: "\(state.currentPlayer.name) emptied their stock pile!"))
                 state.status = .finished(winner: state.currentPlayer.id)
@@ -233,6 +243,7 @@ public struct GameEngine {
         var player = state.currentPlayer
         let card = player.hand.remove(at: handIndex)
         player.discardPiles[discardIndex].append(card)
+        player.cardsDiscarded += 1
         state.players[state.currentPlayerIndex] = player
         state.phase = .waiting
         state.activityLog.append(GameEvent(message: "\(player.name) discards \(card.displayName) to pile \(discardIndex + 1)."))

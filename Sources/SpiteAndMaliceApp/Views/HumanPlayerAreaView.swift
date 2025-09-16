@@ -10,6 +10,10 @@ struct HumanPlayerAreaView: View {
     var onSelectStock: () -> Void
     var onTapDiscard: (Int) -> Void
     var onSelectHandCard: (Int) -> Void
+    var isStockRevealed: Bool
+    var onToggleStockReveal: () -> Void
+    var revealedDiscardIndices: Set<Int>
+    var onToggleDiscardReveal: (Int) -> Void
 
     private var selectedDiscardIndex: Int? {
         guard let selection else { return nil }
@@ -22,11 +26,12 @@ struct HumanPlayerAreaView: View {
             PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
             HStack(alignment: .top, spacing: 18) {
                 StockPileView(
-                    card: player.stockTopCard,
-                    remainingCount: player.stockPile.count,
+                    cards: player.stockPile,
                     isFaceDown: false,
                     isHighlighted: selection?.origin.playerIndex == playerIndex && (selection?.origin.isStock ?? false),
-                    action: onSelectStock
+                    action: onSelectStock,
+                    isRevealed: isStockRevealed,
+                    onRevealToggle: onToggleStockReveal
                 )
 
                 HStack(spacing: 14) {
@@ -36,7 +41,9 @@ struct HumanPlayerAreaView: View {
                             title: "Discard \(index + 1)",
                             isHighlighted: selectedDiscardIndex == index,
                             isInteractive: true,
-                            action: { onTapDiscard(index) }
+                            action: { onTapDiscard(index) },
+                            isRevealed: revealedDiscardIndices.contains(index),
+                            onRevealToggle: { onToggleDiscardReveal(index) }
                         )
                     }
                 }

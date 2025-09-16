@@ -7,40 +7,81 @@ struct BuildPileView: View {
     var title: String
     var isActiveTarget: Bool
     var action: (() -> Void)?
+    var isRevealed: Bool = false
+    var onRevealToggle: (() -> Void)?
 
     private var cardCount: Int { pile.cards.count }
 
     var body: some View {
         VStack(spacing: 10) {
-            ZStack {
-                if let top = pile.topCard?.card {
-                    Button(action: { action?() }) {
-                        CardView(card: top, isHighlighted: isActiveTarget, showsGlow: isActiveTarget)
+            pileContent
+                .overlay(alignment: .topLeading) {
+                    if cardCount > 0 && !isRevealed {
+                        ProgressBadge(currentCount: cardCount)
+                            .offset(x: 10, y: -10)
                     }
-                    .buttonStyle(.plain)
-                } else {
-                    Button(action: { action?() }) {
-                        CardPlaceholder(title: "Start with\nAce")
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 14)
-                                    .stroke(isActiveTarget ? Color.yellow : Color.white.opacity(0.2), lineWidth: isActiveTarget ? 3 : 1)
-                                    .shadow(color: isActiveTarget ? Color.yellow.opacity(0.5) : .clear, radius: 8)
-                            )
+                }
+                .overlay(alignment: .topTrailing) {
+                    if cardCount > 0, let onRevealToggle {
+                        Button(action: onRevealToggle) {
+                            Image(systemName: isRevealed ? "eye.slash.fill" : "eye.fill")
+                                .font(.system(size: 16, weight: .bold))
+                                .foregroundColor(.white)
+                                .padding(6)
+                                .background(Circle().fill(Color.black.opacity(0.55)))
+                        }
+                        .buttonStyle(.plain)
+                        .padding(6)
                     }
-                    .buttonStyle(.plain)
                 }
-            }
-            .overlay(alignment: .topTrailing) {
-                if cardCount > 0 {
-                    ProgressBadge(currentCount: cardCount)
-                        .offset(x: 12, y: -12)
-                }
-            }
-            .accessibilityLabel(Text(pileAccessibilityLabel))
+                .accessibilityLabel(Text(pileAccessibilityLabel))
+                .animation(.spring(response: 0.45, dampingFraction: 0.8), value: isRevealed)
 
             Text(title)
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(0.85))
+        }
+    }
+
+    @ViewBuilder
+    private var pileContent: some View {
+        if isRevealed && cardCount > 0 {
+            CardStackRevealView(cards: pile.cards.map { $0.card })
+        } else if let top = pile.topCard?.card {
+            interactiveCard(for: top)
+        } else {
+            placeholderCard
+        }
+    }
+
+    @ViewBuilder
+    private func interactiveCard(for card: Card) -> some View {
+        let view = CardView(card: card, isHighlighted: isActiveTarget, showsGlow: isActiveTarget)
+        if let action {
+            Button(action: action) {
+                view
+            }
+            .buttonStyle(.plain)
+        } else {
+            view
+        }
+    }
+
+    @ViewBuilder
+    private var placeholderCard: some View {
+        let placeholder = CardPlaceholder(title: "Start with\nAce")
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(isActiveTarget ? Color.yellow : Color.white.opacity(0.2), lineWidth: isActiveTarget ? 3 : 1)
+                    .shadow(color: isActiveTarget ? Color.yellow.opacity(0.5) : .clear, radius: 8)
+            )
+        if let action {
+            Button(action: action) {
+                placeholder
+            }
+            .buttonStyle(.plain)
+        } else {
+            placeholder
         }
     }
 

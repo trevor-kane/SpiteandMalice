@@ -10,7 +10,8 @@ struct SpiteAndMaliceApp: App {
             ContentView()
                 .environmentObject(viewModel)
         }
-        .windowResizability(.contentSize)
+        .windowResizability(.automatic)
+        .defaultSize(width: 1440, height: 900)
         .commands {
             CommandGroup(replacing: .newItem) {
                 Button("New Game") {
@@ -20,6 +21,12 @@ struct SpiteAndMaliceApp: App {
             }
 
             CommandMenu("Gameplay") {
+                Button("Undo Move") {
+                    viewModel.undoLastAction()
+                }
+                .keyboardShortcut("z", modifiers: [.command])
+                .disabled(!viewModel.canUndoTurn)
+
                 Button("Hint") {
                     viewModel.provideHint()
                 }

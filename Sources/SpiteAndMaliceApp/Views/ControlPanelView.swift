@@ -4,8 +4,10 @@ import SwiftUI
 struct ControlPanelView: View {
     var onNewGame: () -> Void
     var onHint: () -> Void
+    var onUndo: () -> Void
     var onEndTurn: () -> Void
     var isHintDisabled: Bool
+    var isUndoDisabled: Bool
     var isEndTurnDisabled: Bool
     @Binding var showsHelp: Bool
 
@@ -21,6 +23,12 @@ struct ControlPanelView: View {
             }
             .buttonStyle(.bordered)
             .disabled(isHintDisabled)
+
+            Button(action: onUndo) {
+                Label("Undo Move", systemImage: "arrow.uturn.backward")
+            }
+            .buttonStyle(.bordered)
+            .disabled(isUndoDisabled)
 
             Button(action: onEndTurn) {
                 Label("End Turn", systemImage: "flag.checkered")
