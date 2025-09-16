@@ -88,8 +88,6 @@ struct ContentView: View {
                 OpponentAreaView(
                     player: item.element,
                     isCurrentTurn: viewModel.state.currentPlayerIndex == item.offset,
-                    isStockRevealed: revealedStockPlayerIDs.contains(item.element.id),
-                    onToggleStockReveal: { toggleStockReveal(for: item.element.id) },
                     revealedDiscardIndices: revealedDiscardIndices(for: item.element.id),
                     onToggleDiscardReveal: { index in toggleDiscardReveal(for: item.element.id, pileIndex: index) }
                 )
@@ -138,8 +136,6 @@ struct ContentView: View {
                 onSelectStock: viewModel.selectStockCard,
                 onTapDiscard: { index in viewModel.handleDiscardTap(index) },
                 onSelectHandCard: { index in viewModel.selectHandCard(at: index) },
-                isStockRevealed: revealedStockPlayerIDs.contains(player.id),
-                onToggleStockReveal: { toggleStockReveal(for: player.id) },
                 revealedDiscardIndices: revealedDiscardIndices(for: player.id),
                 onToggleDiscardReveal: { index in toggleDiscardReveal(for: player.id, pileIndex: index) }
             )
@@ -225,3 +221,5 @@ struct ContentView: View {
     }
 }
 #endif
+
+
