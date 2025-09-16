@@ -10,8 +10,6 @@ struct HumanPlayerAreaView: View {
     var onSelectStock: () -> Void
     var onTapDiscard: (Int) -> Void
     var onSelectHandCard: (Int) -> Void
-    var isStockRevealed: Bool
-    var onToggleStockReveal: () -> Void
     var revealedDiscardIndices: Set<Int>
     var onToggleDiscardReveal: (Int) -> Void
 
@@ -29,9 +27,7 @@ struct HumanPlayerAreaView: View {
                     cards: player.stockPile,
                     isFaceDown: false,
                     isHighlighted: selection?.origin.playerIndex == playerIndex && (selection?.origin.isStock ?? false),
-                    action: onSelectStock,
-                    isRevealed: isStockRevealed,
-                    onRevealToggle: onToggleStockReveal
+                    action: onSelectStock
                 )
 
                 HStack(spacing: 14) {

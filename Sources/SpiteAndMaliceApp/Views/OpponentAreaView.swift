@@ -5,8 +5,6 @@ import SpiteAndMaliceCore
 struct OpponentAreaView: View {
     var player: Player
     var isCurrentTurn: Bool
-    var isStockRevealed: Bool
-    var onToggleStockReveal: () -> Void
     var revealedDiscardIndices: Set<Int>
     var onToggleDiscardReveal: (Int) -> Void
 
@@ -18,9 +16,7 @@ struct OpponentAreaView: View {
                     cards: player.stockPile,
                     isFaceDown: false,
                     isHighlighted: isCurrentTurn,
-                    action: nil,
-                    isRevealed: isStockRevealed,
-                    onRevealToggle: onToggleStockReveal
+                    action: nil
                 )
 
                 HStack(spacing: 14) {
