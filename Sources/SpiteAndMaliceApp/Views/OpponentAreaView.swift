@@ -5,18 +5,23 @@ import SpiteAndMaliceCore
 struct OpponentAreaView: View {
     var player: Player
     var isCurrentTurn: Bool
+    var isStockRevealed: Bool
+    var onToggleStockReveal: () -> Void
+    var revealedDiscardIndices: Set<Int>
+    var onToggleDiscardReveal: (Int) -> Void
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
             HStack(spacing: 18) {
                 StockPileView(
-                    card: player.stockTopCard,
-                    remainingCount: player.stockPile.count,
-                    isFaceDown: true,
-                    isHighlighted: isCurrentTurn
+                    cards: player.stockPile,
+                    isFaceDown: false,
+                    isHighlighted: isCurrentTurn,
+                    action: nil,
+                    isRevealed: isStockRevealed,
+                    onRevealToggle: onToggleStockReveal
                 )
-                .allowsHitTesting(false)
 
                 HStack(spacing: 14) {
                     ForEach(Array(player.discardPiles.indices), id: \.self) { index in
@@ -26,9 +31,10 @@ struct OpponentAreaView: View {
                             title: "Discard \(index + 1)",
                             isHighlighted: isCurrentTurn && !pile.isEmpty,
                             isInteractive: false,
-                            action: nil
+                            action: nil,
+                            isRevealed: revealedDiscardIndices.contains(index),
+                            onRevealToggle: { onToggleDiscardReveal(index) }
                         )
-                        .allowsHitTesting(false)
                     }
                 }
                 Spacer()
