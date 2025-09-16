@@ -39,7 +39,6 @@ struct ContentView: View {
                     .transition(.opacity.combined(with: .scale))
             }
         }
-        .frame(minWidth: 1180, minHeight: 820)
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: summary != nil)
     }
 
@@ -221,5 +220,6 @@ struct ContentView: View {
     }
 }
 #endif
+
 
 

@@ -1,5 +1,6 @@
 #if canImport(SwiftUI)
 import SwiftUI
+import AppKit
 
 @main
 struct SpiteAndMaliceApp: App {
@@ -9,6 +10,7 @@ struct SpiteAndMaliceApp: App {
         WindowGroup {
             ContentView()
                 .environmentObject(viewModel)
+                .background(WindowConfigurator(minSize: NSSize(width: 1180, height: 820)))
         }
         .windowResizability(.automatic)
         .defaultSize(width: 1440, height: 900)
@@ -43,6 +45,12 @@ struct SpiteAndMaliceApp: App {
                     Text("Show Help Panel")
                 }
                 .keyboardShortcut("?", modifiers: [.shift, .command])
+            }
+            CommandGroup(after: .windowArrangement) {
+                Button("Toggle Full Screen") {
+                    NSApp.keyWindow?.toggleFullScreen(nil)
+                }
+                .keyboardShortcut("f", modifiers: [.command, .control])
             }
         }
     }
