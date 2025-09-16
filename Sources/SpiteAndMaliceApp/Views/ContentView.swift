@@ -107,7 +107,7 @@ struct ContentView: View {
 
     private var controlSection: some View {
         ControlPanelView(
-            onNewGame: viewModel.startNewGame,
+            onNewGame: { viewModel.startNewGame() },
             onHint: viewModel.provideHint,
             onEndTurn: viewModel.endTurnIfPossible,
             isHintDisabled: !viewModel.state.currentPlayer.isHuman || viewModel.state.status != .playing,
@@ -146,3 +146,4 @@ struct ContentView: View {
     }
 }
 #endif
+

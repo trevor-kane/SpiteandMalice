@@ -27,9 +27,6 @@ let package = Package(
             name: "SpiteAndMaliceApp",
             dependencies: ["SpiteAndMaliceCore"],
             path: "Sources/SpiteAndMaliceApp",
-            resources: [
-                .process("Resources")
-            ],
             swiftSettings: [
                 .define("SWIFTUI_APP")
             ]
