@@ -17,9 +17,12 @@ struct ContentView: View {
         let summary = viewModel.gameSummary
         ZStack(alignment: .top) {
             backgroundView
-            mainContent
-                .blur(radius: summary == nil ? 0 : 8)
-                .allowsHitTesting(summary == nil)
+            ScrollView(.vertical, showsIndicators: true) {
+                mainContent
+                    .frame(maxWidth: .infinity)
+            }
+            .blur(radius: summary == nil ? 0 : 8)
+            .allowsHitTesting(summary == nil)
 
             if let hint = viewModel.hint?.message, summary == nil {
                 VStack {
@@ -31,7 +34,7 @@ struct ContentView: View {
             }
 
             if let summary {
-                WinOverlayView(summary: summary, onPlayAgain: viewModel.startNewGame)
+                WinOverlayView(summary: summary, onPlayAgain: { viewModel.startNewGame() })
                     .padding(.horizontal, 32)
                     .transition(.opacity.combined(with: .scale))
             }
