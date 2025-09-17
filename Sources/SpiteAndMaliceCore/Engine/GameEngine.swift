@@ -193,6 +193,9 @@ public struct GameEngine {
         case let .discard(_, discardIndex, _):
             player.discardPiles[discardIndex].removeLast()
         }
+        if sourceCard.value == .king {
+            player.kingsPlayed += 1
+        }
         player.cardsPlayed += 1
         state.players[playerIndex] = player
 

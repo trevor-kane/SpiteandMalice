@@ -13,10 +13,14 @@ struct StockPileView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            HStack(alignment: .top, spacing: 16) {
-                countIndicator
+            ZStack {
                 stockContent
                     .accessibilityLabel(Text(accessibilityLabel))
+            }
+            .overlay(alignment: .leading) {
+                countIndicator
+                    .allowsHitTesting(false)
+                    .offset(x: -72)
             }
 
             Text("Stock")

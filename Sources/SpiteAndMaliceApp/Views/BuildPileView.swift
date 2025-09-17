@@ -16,11 +16,16 @@ struct BuildPileView: View {
         VStack(spacing: 10) {
             pileContent
                 .overlay(alignment: .top) {
-                    if cardCount > 0 {
+                    if cardCount >= 2 {
                         PilePeekHandle(action: onRevealToggle) {
-                            HStack(spacing: 8) {
-                                Text("\(cardCount) / \(BuildPile.targetSequenceCount)")
-                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            HStack(alignment: .center, spacing: 8) {
+                                VStack(spacing: 2) {
+                                    Text("\(cardCount)")
+                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
+                                    Text("of \(BuildPile.targetSequenceCount)")
+                                        .font(.system(size: 10, weight: .medium, design: .rounded))
+                                        .opacity(0.8)
+                                }
                                 if onRevealToggle != nil {
                                     Image(systemName: isRevealed ? "chevron.up" : "chevron.down")
                                         .font(.system(size: 11, weight: .bold))

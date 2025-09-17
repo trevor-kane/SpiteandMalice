@@ -88,6 +88,7 @@ struct WinOverlayView: View {
             statRow(icon: "rectangle.stack.fill", label: "Stock remaining", value: "\(player.stockRemaining)")
             statRow(icon: "checkmark.circle.fill", label: "Stock cards cleared", value: "\(player.completedStockCards)")
             statRow(icon: "suit.club.fill", label: "Cards played", value: "\(player.cardsPlayed)")
+            statRow(icon: "crown.fill", label: "Kings played", value: "\(player.kingsPlayed)")
             statRow(icon: "arrow.down.circle.fill", label: "Cards discarded", value: "\(player.cardsDiscarded)")
             statRow(icon: "hand.draw.fill", label: "Hand cards", value: "\(player.handCount)")
             statRow(icon: "tray.full.fill", label: "Discard pile cards", value: "\(player.discardCardCount)")

@@ -23,14 +23,6 @@ struct DrawPileView: View {
                         .foregroundColor(.white.opacity(0.8))
                 }
             }
-            Text("Draw pile")
-                .font(.system(size: 12, weight: .medium))
-                .foregroundColor(.white.opacity(0.75))
-            if recycleCount > 0 {
-                Text("Reserve: \(recycleCount)")
-                    .font(.system(size: 11, weight: .medium))
-                    .foregroundColor(.white.opacity(0.6))
-            }
         }
     }
 }

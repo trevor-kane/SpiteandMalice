@@ -26,6 +26,7 @@ final class GameViewModel: ObservableObject {
         let completedStockCards: Int
         let cardsPlayed: Int
         let cardsDiscarded: Int
+        let kingsPlayed: Int
         let isWinner: Bool
     }
 
@@ -136,6 +137,10 @@ final class GameViewModel: ObservableObject {
         selection = nil
     }
 
+    func dismissHint() {
+        hint = nil
+    }
+
     func playSelectedCard(on pileIndex: Int) {
         guard state.status == .playing else { return }
         guard state.currentPlayer.isHuman else { return }
@@ -194,16 +199,6 @@ final class GameViewModel: ObservableObject {
         } else {
             selectDiscardCard(pileIndex: index)
         }
-    }
-
-    func endTurnIfPossible() {
-        guard state.status == .playing else { return }
-        guard state.currentPlayer.isHuman else { return }
-        guard state.phase == .waiting else {
-            statusBanner = "Discard one card to end your turn."
-            return
-        }
-        advanceToNextPlayer()
     }
 
     func undoLastAction() {
@@ -287,6 +282,7 @@ final class GameViewModel: ObservableObject {
                 completedStockCards: player.completedStockCards,
                 cardsPlayed: player.cardsPlayed,
                 cardsDiscarded: player.cardsDiscarded,
+                kingsPlayed: player.kingsPlayed,
                 isWinner: player.id == winnerID
             )
         }
