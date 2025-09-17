@@ -25,7 +25,7 @@ struct ContentView: View {
 
             if let hint = viewModel.hint?.message, summary == nil {
                 VStack {
-                    HintOverlayView(message: hint)
+                    HintOverlayView(message: hint, onDismiss: { viewModel.dismissHint() })
                     Spacer()
                 }
                 .padding(.top, 24)
@@ -42,20 +42,47 @@ struct ContentView: View {
     }
 
     private var mainContent: some View {
-        VStack(spacing: 32) {
-            header
-                .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(alignment: .top, spacing: 32) {
+            leftSidebar
 
-            opponentsSection
-            centrePlayArea
-            humanSection
-            controlSection
-            footerSection
+            VStack(alignment: .leading, spacing: 32) {
+                header
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                opponentsSection
+                centrePlayArea
+                humanSection
+                controlSection
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+            .layoutPriority(1)
+
+            rightSidebar
         }
         .padding(.vertical, 48)
         .padding(.horizontal, 32)
-        .frame(maxWidth: 1240)
+        .frame(maxWidth: 1440)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+    }
+
+    private var leftSidebar: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            RecentActivityView(events: viewModel.activityLog())
+            Spacer(minLength: 0)
+        }
+        .frame(width: 300, alignment: .leading)
+    }
+
+    private var rightSidebar: some View {
+        VStack(alignment: .leading, spacing: 20) {
+            ScoreboardView(
+                players: viewModel.state.players,
+                currentPlayerIndex: viewModel.state.currentPlayerIndex,
+                turn: viewModel.state.turn
+            )
+            Spacer(minLength: 0)
+        }
+        .frame(width: 300, alignment: .leading)
     }
 
     private var backgroundView: some View {
@@ -144,25 +171,11 @@ struct ContentView: View {
             onNewGame: { viewModel.startNewGame() },
             onHint: viewModel.provideHint,
             onUndo: viewModel.undoLastAction,
-            onEndTurn: viewModel.endTurnIfPossible,
             isHintDisabled: !viewModel.state.currentPlayer.isHuman || viewModel.state.status != .playing,
+            isHintActive: viewModel.hint != nil,
             isUndoDisabled: !viewModel.canUndoTurn,
-            isEndTurnDisabled: !(viewModel.state.currentPlayer.isHuman && viewModel.state.phase == .waiting),
             showsHelp: $viewModel.showsHelp
         )
-        .frame(maxWidth: .infinity, alignment: .center)
-    }
-
-    private var footerSection: some View {
-        VStack(spacing: 20) {
-            ScoreboardView(
-                players: viewModel.state.players,
-                currentPlayerIndex: viewModel.state.currentPlayerIndex,
-                turn: viewModel.state.turn
-            )
-
-            RecentActivityView(events: viewModel.activityLog())
-        }
         .frame(maxWidth: .infinity, alignment: .center)
     }
 

@@ -34,7 +34,7 @@ struct DiscardPileView: View {
             }
         }
         .overlay(alignment: .top) {
-            if !cards.isEmpty {
+            if cards.count >= 2 {
                 PilePeekHandle(action: onRevealToggle) {
                     HStack(spacing: 8) {
                         Text("\(cards.count)")

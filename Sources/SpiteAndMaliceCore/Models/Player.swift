@@ -11,6 +11,7 @@ public struct Player: Identifiable, Codable, Equatable {
     public var completedStockCards: Int
     public var cardsPlayed: Int
     public var cardsDiscarded: Int
+    public var kingsPlayed: Int
 
     public init(
         id: UUID = UUID(),
@@ -22,7 +23,8 @@ public struct Player: Identifiable, Codable, Equatable {
         score: Int = 0,
         completedStockCards: Int = 0,
         cardsPlayed: Int = 0,
-        cardsDiscarded: Int = 0
+        cardsDiscarded: Int = 0,
+        kingsPlayed: Int = 0
     ) {
         self.id = id
         self.name = name
@@ -34,6 +36,7 @@ public struct Player: Identifiable, Codable, Equatable {
         self.completedStockCards = completedStockCards
         self.cardsPlayed = cardsPlayed
         self.cardsDiscarded = cardsDiscarded
+        self.kingsPlayed = kingsPlayed
     }
 
     public var stockTopCard: Card? { stockPile.last }

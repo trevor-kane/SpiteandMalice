@@ -32,11 +32,17 @@ struct RecentActivityView: View {
                 }
             }
         }
-        .padding(20)
+        .padding(24)
         .background(
-            RoundedRectangle(cornerRadius: 22)
-                .fill(Color.white.opacity(0.04))
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .fill(.ultraThinMaterial)
+                .opacity(0.9)
         )
+        .overlay(
+            RoundedRectangle(cornerRadius: 28, style: .continuous)
+                .stroke(Color.white.opacity(0.16), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 10)
     }
 
     private struct ActivityRow: View {
