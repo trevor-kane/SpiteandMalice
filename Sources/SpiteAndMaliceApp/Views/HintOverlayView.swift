@@ -6,59 +6,73 @@ struct HintOverlayView: View {
     var recommendations: [GameViewModel.Hint.Recommendation]
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            HStack(spacing: 8) {
+        VStack(alignment: .leading, spacing: 16) {
+            HStack(spacing: 12) {
                 Image(systemName: "lightbulb.fill")
-                    .font(.system(size: 14, weight: .bold))
-                Text("Tip")
-                    .font(.system(size: 15, weight: .bold, design: .rounded))
+                    .font(.system(size: 16, weight: .bold))
+                    .foregroundColor(Color.yellow.opacity(0.9))
+                    .padding(10)
+                    .background(Circle().fill(Color.yellow.opacity(0.18)))
+
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Tips active")
+                        .font(.system(size: 15, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white.opacity(0.92))
+                    Text("Hints stay on until you toggle them off")
+                        .font(.system(size: 11.5, weight: .medium, design: .rounded))
+                        .foregroundColor(.white.opacity(0.6))
+                }
             }
-            .foregroundColor(.black.opacity(0.85))
 
-            Text(message)
-                .font(.system(size: 14, weight: .semibold, design: .rounded))
-                .foregroundColor(.black.opacity(0.92))
-                .fixedSize(horizontal: false, vertical: true)
+            VStack(alignment: .leading, spacing: 10) {
+                Text(message)
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.9))
+                    .fixedSize(horizontal: false, vertical: true)
 
-            if !recommendations.isEmpty {
-                Divider()
-                    .background(Color.black.opacity(0.15))
+                if !recommendations.isEmpty {
+                    Divider()
+                        .overlay(Color.white.opacity(0.12))
 
-                VStack(alignment: .leading, spacing: 8) {
-                    Text("Top plays")
-                        .font(.system(size: 12.5, weight: .bold, design: .rounded))
-                        .foregroundColor(.black.opacity(0.7))
+                    VStack(alignment: .leading, spacing: 10) {
+                        Text("Recommended plays")
+                            .font(.system(size: 12.5, weight: .bold, design: .rounded))
+                            .foregroundColor(.white.opacity(0.68))
 
-                    ForEach(recommendations, id: \.rank) { recommendation in
-                        HStack(alignment: .top, spacing: 10) {
-                            Text("\(recommendation.rank)")
-                                .font(.system(size: 13, weight: .bold, design: .rounded))
-                                .padding(6)
-                                .background(Circle().fill(Color.black.opacity(0.08)))
-                                .foregroundColor(.black.opacity(0.75))
+                        ForEach(recommendations, id: \.rank) { recommendation in
+                            HStack(alignment: .top, spacing: 12) {
+                                Text("\(recommendation.rank)")
+                                    .font(.system(size: 12.5, weight: .bold, design: .rounded))
+                                    .padding(.horizontal, 10)
+                                    .padding(.vertical, 6)
+                                    .background(
+                                        Capsule(style: .continuous)
+                                            .fill(Color.yellow.opacity(0.2))
+                                    )
+                                    .foregroundColor(Color.yellow.opacity(0.9))
 
-                            Text(recommendation.detail)
-                                .font(.system(size: 12.5, weight: .semibold, design: .rounded))
-                                .foregroundColor(.black.opacity(0.78))
-                                .fixedSize(horizontal: false, vertical: true)
+                                Text(recommendation.detail)
+                                    .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                                    .foregroundColor(.white.opacity(0.82))
+                                    .fixedSize(horizontal: false, vertical: true)
+                            }
                         }
                     }
                 }
             }
-
-            Text("Tap the Hint button again to dismiss.")
-                .font(.system(size: 11.5, weight: .medium, design: .rounded))
-                .foregroundColor(.black.opacity(0.6))
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 16)
+        .padding(.horizontal, 22)
+        .padding(.vertical, 20)
         .background(
-            RoundedRectangle(cornerRadius: 22, style: .continuous)
-                .fill(Color.yellow.opacity(0.9))
-                .shadow(color: Color.black.opacity(0.25), radius: 10, x: 0, y: 4)
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(Color.white.opacity(0.08))
         )
-        .padding(.top, 8)
-        .transition(.opacity.combined(with: .scale))
+        .overlay(
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .stroke(Color.white.opacity(0.22), lineWidth: 1)
+        )
+        .shadow(color: Color.black.opacity(0.25), radius: 14, y: 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 #endif

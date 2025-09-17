@@ -19,7 +19,7 @@ struct CardView: View {
         let size = CGSize(width: baseSize.width * scale, height: baseSize.height * scale)
         ZStack {
             RoundedRectangle(cornerRadius: 14, style: .continuous)
-                .fill(isFaceDown ? AnyShapeStyle(Color.gray.opacity(0.5)) : AnyShapeStyle(CardPalette.background(for: card)))
+                .fill(isFaceDown ? faceDownBackground : AnyShapeStyle(CardPalette.background(for: card)))
                 .overlay(
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .stroke(borderColor, lineWidth: isSelected ? 4 : 2)
@@ -65,6 +65,16 @@ struct CardView: View {
         } else {
             return Color.white.opacity(0.6)
         }
+    }
+
+    private var faceDownBackground: AnyShapeStyle {
+        AnyShapeStyle(
+            LinearGradient(
+                colors: [Color(red: 0.27, green: 0.31, blue: 0.43), Color(red: 0.19, green: 0.22, blue: 0.33)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        )
     }
 
     @ViewBuilder

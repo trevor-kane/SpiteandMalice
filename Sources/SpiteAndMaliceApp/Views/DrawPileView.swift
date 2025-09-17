@@ -6,21 +6,34 @@ struct DrawPileView: View {
     var recycleCount: Int
 
     var body: some View {
-        VStack(spacing: 6) {
-            ZStack {
-                CardPlaceholder(title: "Draw")
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14)
-                            .strokeBorder(Color.white.opacity(0.25), lineWidth: 1.5)
+        VStack(spacing: 10) {
+            ZStack(alignment: .topTrailing) {
+                RoundedRectangle(cornerRadius: 14, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [Color(red: 0.28, green: 0.33, blue: 0.5), Color(red: 0.19, green: 0.22, blue: 0.36)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
                     )
-                if drawCount > 0 {
-                    Text("\(drawCount)")
-                        .font(.system(size: 20, weight: .bold, design: .rounded))
-                        .foregroundColor(.white)
-                } else {
-                    Text("Reshuffle")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white.opacity(0.8))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 14, style: .continuous)
+                            .stroke(Color.white.opacity(0.28), lineWidth: 1.4)
+                    )
+                    .frame(width: 70, height: 98)
+
+                Text("\(drawCount)")
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .foregroundColor(.white)
+
+                if recycleCount > 0 {
+                    PileBadge {
+                        Label("\(recycleCount)", systemImage: "arrow.triangle.2.circlepath")
+                            .font(.system(size: 10.5, weight: .semibold, design: .rounded))
+                            .labelStyle(.titleAndIcon)
+                            .imageScale(.small)
+                    }
+                    .offset(x: -6, y: 8)
                 }
             }
         }

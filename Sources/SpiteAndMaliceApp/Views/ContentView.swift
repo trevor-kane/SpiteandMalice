@@ -5,25 +5,20 @@ import SpiteAndMaliceCore
 struct ContentView: View {
     @EnvironmentObject private var viewModel: GameViewModel
 
+    @State private var zoomScale: CGFloat = 1.0
+
     var body: some View {
         let summary = viewModel.gameSummary
         ZStack(alignment: .top) {
             backgroundView
             ScrollView(.vertical, showsIndicators: true) {
                 mainContent
+                    .scaleEffect(zoomScale, anchor: .top)
+                    .padding(.top, 16)
                     .frame(maxWidth: .infinity)
             }
             .blur(radius: summary == nil ? 0 : 8)
             .allowsHitTesting(summary == nil)
-
-            if let hint = viewModel.hint, summary == nil {
-                VStack {
-                    HintOverlayView(message: hint.message, recommendations: hint.recommendations)
-                    Spacer()
-                }
-                .padding(.top, 24)
-                .transition(.opacity)
-            }
 
             if let summary {
                 WinOverlayView(summary: summary, onPlayAgain: { viewModel.startNewGame() })
@@ -31,53 +26,63 @@ struct ContentView: View {
                     .transition(.opacity.combined(with: .scale))
             }
         }
+        .overlay(alignment: .topTrailing) {
+            ZoomControlView(zoomLevel: $zoomScale)
+                .padding(.top, 16)
+                .padding(.trailing, 24)
+        }
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: summary != nil)
     }
 
     private var mainContent: some View {
-        HStack(alignment: .top, spacing: 56) {
-            leftSidebar
+        VStack(alignment: .leading, spacing: 32) {
+            header
+                .frame(maxWidth: .infinity, alignment: .leading)
 
-            VStack(alignment: .leading, spacing: 32) {
-                header
-                    .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(alignment: .top, spacing: 32) {
+                activityColumn
 
-                opponentsSection
-                centrePlayArea
-                humanSection
-                controlSection
+                VStack(spacing: 28) {
+                    opponentsSection
+                    centrePlayArea
+                    humanSection
+                    controlSection
+                }
+                .frame(maxWidth: .infinity, alignment: .center)
+
+                sidebarColumn
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
-            .layoutPriority(1)
-
-            rightSidebar
         }
         .padding(.vertical, 48)
         .padding(.horizontal, 32)
-        .frame(maxWidth: 1440)
-        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
+        .frame(maxWidth: 1360)
+        .frame(maxWidth: .infinity, alignment: .top)
     }
 
-    private var leftSidebar: some View {
+    private var activityColumn: some View {
         VStack(alignment: .leading, spacing: 20) {
             RecentActivityView(events: viewModel.activityLog())
             Spacer(minLength: 0)
         }
-        .frame(width: 300, alignment: .leading)
-        .padding(.trailing, 12)
+        .frame(width: 260, alignment: .leading)
     }
 
-    private var rightSidebar: some View {
+    private var sidebarColumn: some View {
         VStack(alignment: .leading, spacing: 20) {
             ScoreboardView(
                 players: viewModel.state.players,
                 currentPlayerIndex: viewModel.state.currentPlayerIndex,
                 turn: viewModel.state.turn
             )
+
+            if let hint = viewModel.hint, viewModel.gameSummary == nil {
+                HintOverlayView(message: hint.message, recommendations: hint.recommendations)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             Spacer(minLength: 0)
         }
-        .frame(width: 300, alignment: .leading)
-        .padding(.leading, 12)
+        .frame(width: 280, alignment: .leading)
     }
 
     private var backgroundView: some View {
@@ -115,7 +120,7 @@ struct ContentView: View {
 
     private var centrePlayArea: some View {
         VStack(spacing: 24) {
-            HStack(spacing: 28) {
+            HStack(alignment: .top, spacing: 28) {
                 ForEach(Array(viewModel.state.buildPiles.enumerated()), id: \.0) { index, pile in
                     BuildPileView(
                         pile: pile,
@@ -131,9 +136,9 @@ struct ContentView: View {
                     recycleCount: viewModel.state.recyclePile.count
                 )
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     @ViewBuilder
@@ -158,7 +163,7 @@ struct ContentView: View {
             onHint: viewModel.provideHint,
             onUndo: viewModel.undoLastAction,
             isHintDisabled: !viewModel.state.currentPlayer.isHuman || viewModel.state.status != .playing,
-            isHintActive: viewModel.hint != nil,
+            isHintPinned: viewModel.isHintPinned,
             isUndoDisabled: !viewModel.canUndoTurn
         )
         .frame(maxWidth: .infinity, alignment: .center)
