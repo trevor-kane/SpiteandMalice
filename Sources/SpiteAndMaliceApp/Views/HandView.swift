@@ -24,6 +24,7 @@ struct HandView: View {
                 }
             }
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 #endif

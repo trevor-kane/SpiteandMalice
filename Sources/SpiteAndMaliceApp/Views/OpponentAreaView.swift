@@ -9,9 +9,10 @@ struct OpponentAreaView: View {
     var onToggleDiscardReveal: (Int) -> Void
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(spacing: 18) {
             PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
-            HStack(spacing: 18) {
+                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(spacing: 22) {
                 StockPileView(
                     cards: player.stockPile,
                     isFaceDown: false,
@@ -19,7 +20,7 @@ struct OpponentAreaView: View {
                     action: nil
                 )
 
-                HStack(spacing: 14) {
+                HStack(spacing: 18) {
                     ForEach(Array(player.discardPiles.indices), id: \.self) { index in
                         let pile = player.discardPiles[index]
                         DiscardPileView(
@@ -33,14 +34,16 @@ struct OpponentAreaView: View {
                         )
                     }
                 }
-                Spacer()
             }
+            .frame(maxWidth: .infinity, alignment: .center)
         }
-        .padding()
+        .padding(.vertical, 20)
+        .padding(.horizontal, 22)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.05))
         )
+        .frame(maxWidth: .infinity)
     }
 }
 #endif
