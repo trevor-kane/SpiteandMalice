@@ -396,7 +396,9 @@ final class GameViewModel: ObservableObject {
         pendingAdvanceTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 350_000_000)
             guard let self, !Task.isCancelled else { return }
-            await self.finishTurnAfterDiscard()
+            await MainActor.run {
+                self.finishTurnAfterDiscard()
+            }
         }
     }
 
