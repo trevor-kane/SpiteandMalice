@@ -48,6 +48,7 @@ final class GameViewModel: ObservableObject {
 
     private let engine = GameEngine()
     private var aiTask: Task<Void, Never>?
+    private var pendingAdvanceTask: Task<Void, Never>?
     private var undoStack: [GameState] = [] {
         didSet { updateUndoAvailability() }
     }
@@ -62,10 +63,13 @@ final class GameViewModel: ObservableObject {
 
     deinit {
         aiTask?.cancel()
+        pendingAdvanceTask?.cancel()
     }
 
     func startNewGame(seed: UInt64? = nil) {
         aiTask?.cancel()
+        pendingAdvanceTask?.cancel()
+        pendingAdvanceTask = nil
         do {
             state = try engine.newGame(
                 with: [
@@ -94,7 +98,11 @@ final class GameViewModel: ObservableObject {
         guard state.currentPlayer.isHuman else { return }
         guard state.phase == .acting else { return }
         guard let card = state.players[state.currentPlayerIndex].hand[safe: index] else { return }
-        selection = CardSelection(origin: .hand(playerIndex: state.currentPlayerIndex, handIndex: index), card: card)
+        if selection?.origin == .hand(playerIndex: state.currentPlayerIndex, handIndex: index), selection?.card.id == card.id {
+            selection = nil
+        } else {
+            selection = CardSelection(origin: .hand(playerIndex: state.currentPlayerIndex, handIndex: index), card: card)
+        }
         hint = nil
     }
 
@@ -102,7 +110,11 @@ final class GameViewModel: ObservableObject {
         guard state.status == .playing else { return }
         guard state.currentPlayer.isHuman else { return }
         guard let card = state.players[state.currentPlayerIndex].stockTopCard else { return }
-        selection = CardSelection(origin: .stock(playerIndex: state.currentPlayerIndex), card: card)
+        if selection?.origin == .stock(playerIndex: state.currentPlayerIndex), selection?.card.id == card.id {
+            selection = nil
+        } else {
+            selection = CardSelection(origin: .stock(playerIndex: state.currentPlayerIndex), card: card)
+        }
         hint = nil
     }
 
@@ -111,7 +123,12 @@ final class GameViewModel: ObservableObject {
         guard state.currentPlayer.isHuman else { return }
         guard state.phase == .acting else { return }
         guard let card = state.players[state.currentPlayerIndex].discardPiles[safe: pileIndex]?.last else { return }
-        selection = CardSelection(origin: .discard(playerIndex: state.currentPlayerIndex, pileIndex: pileIndex, depth: 0), card: card)
+        if selection?.origin == .discard(playerIndex: state.currentPlayerIndex, pileIndex: pileIndex, depth: 0),
+           selection?.card.id == card.id {
+            selection = nil
+        } else {
+            selection = CardSelection(origin: .discard(playerIndex: state.currentPlayerIndex, pileIndex: pileIndex, depth: 0), card: card)
+        }
         hint = nil
     }
 
@@ -161,7 +178,8 @@ final class GameViewModel: ObservableObject {
             }
             updateStatusBanner()
             if state.status == .playing {
-                statusBanner = "Card discarded. You can end your turn or undo."
+                statusBanner = "Card discarded. Passing the turn..."
+                scheduleAutomaticTurnAdvance()
             }
         } catch {
             statusBanner = error.localizedDescription
@@ -193,6 +211,8 @@ final class GameViewModel: ObservableObject {
         guard state.status == .playing else { return }
         guard state.currentPlayer.isHuman else { return }
         guard let previousState = undoStack.popLast() else { return }
+        pendingAdvanceTask?.cancel()
+        pendingAdvanceTask = nil
         state = previousState
         selection = nil
         hint = nil
@@ -244,7 +264,7 @@ final class GameViewModel: ObservableObject {
     }
 
     func activityLog() -> [GameEvent] {
-        state.activityLog.suffix(6)
+        Array(state.activityLog.suffix(8).reversed())
     }
 
     var gameSummary: GameSummary? {
@@ -288,6 +308,8 @@ final class GameViewModel: ObservableObject {
         hint = nil
         undoStack.removeAll()
         hasPlayedStockThisTurn = false
+        pendingAdvanceTask?.cancel()
+        pendingAdvanceTask = nil
         engine.advanceTurn(state: &state)
         engine.prepareTurn(state: &state)
         if state.status == .playing {
@@ -346,6 +368,23 @@ final class GameViewModel: ObservableObject {
     private func prepareUndoForCurrentPlayer() {
         undoStack.removeAll()
         hasPlayedStockThisTurn = false
+    }
+
+    private func scheduleAutomaticTurnAdvance() {
+        pendingAdvanceTask?.cancel()
+        pendingAdvanceTask = Task { [weak self] in
+            try? await Task.sleep(nanoseconds: 350_000_000)
+            guard let self, !Task.isCancelled else { return }
+            await self.finishTurnAfterDiscard()
+        }
+    }
+
+    @MainActor
+    private func finishTurnAfterDiscard() {
+        pendingAdvanceTask = nil
+        guard state.status == .playing else { return }
+        guard state.phase == .waiting else { return }
+        advanceToNextPlayer()
     }
 
     private func updateUndoAvailability() {

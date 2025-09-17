@@ -35,20 +35,27 @@ struct DiscardPileView: View {
         }
         .overlay(alignment: .topTrailing) {
             if cards.count > 1 && !isRevealed {
-                countBadge
+                PileBadge {
+                    Text("\(cards.count)")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                }
+                .padding(8)
             }
         }
         .overlay(alignment: .topLeading) {
             if !cards.isEmpty, let onRevealToggle {
                 Button(action: onRevealToggle) {
-                    Image(systemName: isRevealed ? "eye.slash.fill" : "eye.fill")
-                        .font(.system(size: 15, weight: .bold))
-                        .foregroundColor(.white)
-                        .padding(6)
-                        .background(Circle().fill(Color.black.opacity(0.55)))
+                    PileBadge {
+                        HStack(spacing: 6) {
+                            Image(systemName: isRevealed ? "eye.slash.fill" : "eye.fill")
+                                .font(.system(size: 12, weight: .semibold))
+                            Text(isRevealed ? "Hide" : "View")
+                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        }
+                    }
                 }
                 .buttonStyle(.plain)
-                .padding(6)
+                .padding(8)
             }
         }
     }
@@ -78,15 +85,6 @@ struct DiscardPileView: View {
             CardPlaceholder(title: "Discard")
                 .opacity(isInteractive ? 1 : 0.65)
         }
-    }
-
-    private var countBadge: some View {
-        Text("\(cards.count)")
-            .font(.system(size: 11, weight: .semibold))
-            .foregroundColor(.white)
-            .padding(6)
-            .background(Circle().fill(Color.black.opacity(0.45)))
-            .offset(x: 22, y: -30)
     }
 }
 #endif

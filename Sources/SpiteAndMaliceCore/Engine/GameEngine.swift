@@ -182,17 +182,33 @@ public struct GameEngine {
         let playedCard = PlayedCard(card: sourceCard, resolvedValue: resolvedValue)
         targetPile.append(playedCard)
 
+        var didPlayFromHand = false
         switch origin {
         case .stock:
             player.stockPile.removeLast()
             player.completedStockCards += 1
         case let .hand(_, handIndex):
             player.hand.remove(at: handIndex)
+            didPlayFromHand = true
         case let .discard(_, discardIndex, _):
             player.discardPiles[discardIndex].removeLast()
         }
         player.cardsPlayed += 1
         state.players[playerIndex] = player
+
+        if didPlayFromHand,
+           state.status == .playing,
+           state.phase == .acting,
+           state.players[playerIndex].hand.isEmpty {
+            let drawn = drawToHand(playerIndex: playerIndex, state: &state)
+            if drawn > 0 {
+                state.activityLog.append(
+                    GameEvent(
+                        message: "\(state.currentPlayer.name) draws \(drawn) fresh card\(drawn == 1 ? "" : "s") to refill their hand."
+                    )
+                )
+            }
+        }
 
         var clearedCards: [Card] = []
         var didComplete = false
@@ -218,7 +234,17 @@ public struct GameEngine {
             state.phase = .acting
         }
 
-        state.activityLog.append(GameEvent(message: "\(state.currentPlayer.name) plays \(sourceCard.displayName) to build pile \(pileIndex + 1)."))
+        if sourceCard.isWild, sourceCard.value == .king, resolvedValue != .king {
+            state.activityLog.append(
+                GameEvent(
+                    message: "\(state.currentPlayer.name) plays a King as \(resolvedValue.accessibilityLabel) to build pile \(pileIndex + 1)."
+                )
+            )
+        } else {
+            state.activityLog.append(
+                GameEvent(message: "\(state.currentPlayer.name) plays \(sourceCard.displayName) to build pile \(pileIndex + 1).")
+            )
+        }
 
         return PlayResult(
             playedCard: playedCard,
