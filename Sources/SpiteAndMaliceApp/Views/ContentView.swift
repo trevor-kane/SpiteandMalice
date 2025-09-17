@@ -10,7 +10,6 @@ private struct DiscardIdentifier: Hashable {
 struct ContentView: View {
     @EnvironmentObject private var viewModel: GameViewModel
     @State private var revealedBuildPileIDs: Set<UUID> = []
-    @State private var revealedStockPlayerIDs: Set<UUID> = []
     @State private var revealedDiscardIdentifiers: Set<DiscardIdentifier> = []
 
     var body: some View {
@@ -43,7 +42,7 @@ struct ContentView: View {
     }
 
     private var mainContent: some View {
-        VStack(spacing: 28) {
+        VStack(spacing: 32) {
             header
                 .frame(maxWidth: .infinity, alignment: .leading)
 
@@ -52,11 +51,10 @@ struct ContentView: View {
             humanSection
             controlSection
             footerSection
-                .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 42)
-        .padding(.horizontal, 36)
-        .frame(maxWidth: 1320)
+        .padding(.vertical, 48)
+        .padding(.horizontal, 32)
+        .frame(maxWidth: 1240)
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
     }
 
@@ -82,7 +80,7 @@ struct ContentView: View {
     }
 
     private var opponentsSection: some View {
-        VStack(alignment: .leading, spacing: 14) {
+        VStack(alignment: .leading, spacing: 18) {
             ForEach(Array(viewModel.state.players.enumerated()).filter { !$0.element.isHuman }, id: \.element.id) { item in
                 OpponentAreaView(
                     player: item.element,
@@ -92,12 +90,12 @@ struct ContentView: View {
                 )
             }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private var centrePlayArea: some View {
-        VStack(spacing: 20) {
-            HStack(spacing: 24) {
+        VStack(spacing: 24) {
+            HStack(spacing: 28) {
                 ForEach(Array(viewModel.state.buildPiles.enumerated()), id: \.0) { index, pile in
                     BuildPileView(
                         pile: pile,
@@ -156,16 +154,16 @@ struct ContentView: View {
     }
 
     private var footerSection: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            Text("Recent activity")
-                .font(.system(size: 15, weight: .semibold, design: .rounded))
-                .foregroundColor(.white.opacity(0.85))
-            ForEach(viewModel.activityLog()) { event in
-                Text(event.message)
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundColor(.white.opacity(0.68))
-            }
+        VStack(spacing: 20) {
+            ScoreboardView(
+                players: viewModel.state.players,
+                currentPlayerIndex: viewModel.state.currentPlayerIndex,
+                turn: viewModel.state.turn
+            )
+
+            RecentActivityView(events: viewModel.activityLog())
         }
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     private var helpPanel: some View {
@@ -190,16 +188,6 @@ struct ContentView: View {
                 revealedBuildPileIDs.remove(id)
             } else {
                 revealedBuildPileIDs.insert(id)
-            }
-        }
-    }
-
-    private func toggleStockReveal(for playerID: UUID) {
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-            if revealedStockPlayerIDs.contains(playerID) {
-                revealedStockPlayerIDs.remove(playerID)
-            } else {
-                revealedStockPlayerIDs.insert(playerID)
             }
         }
     }

@@ -47,7 +47,7 @@ struct BuildPileView: View {
     private var pileContent: some View {
         if isRevealed && cardCount > 0 {
             CardStackRevealView(cards: pile.cards.map { $0.card })
-        } else if let top = pile.topCard?.card {
+        } else if let top = pile.topCard {
             interactiveCard(for: top)
         } else {
             placeholderCard
@@ -55,8 +55,14 @@ struct BuildPileView: View {
     }
 
     @ViewBuilder
-    private func interactiveCard(for card: Card) -> some View {
-        let view = CardView(card: card, isHighlighted: isActiveTarget, showsGlow: isActiveTarget)
+    private func interactiveCard(for playedCard: PlayedCard) -> some View {
+        let resolvedOverride = playedCard.card.isWild ? playedCard.resolvedValue : nil
+        let view = CardView(
+            card: playedCard.card,
+            isHighlighted: isActiveTarget,
+            showsGlow: isActiveTarget,
+            resolvedValueOverride: resolvedOverride
+        )
         if let action {
             Button(action: action) {
                 view
