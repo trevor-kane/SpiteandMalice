@@ -31,11 +31,21 @@ struct StockPileView: View {
 
     @ViewBuilder
     private var stockContent: some View {
-        if let card = topCard {
-            interactiveCard(for: card)
-        } else {
-            placeholderCard
+        ZStack(alignment: .top) {
+            if let card = topCard {
+                if remainingCount > 1 {
+                    PeekingCardStack(
+                        cards: Array(cards.dropLast()),
+                        isFaceDown: isFaceDown,
+                        scale: 0.98
+                    )
+                }
+                interactiveCard(for: card)
+            } else {
+                placeholderCard
+            }
         }
+        .padding(.top, PeekingCardStack.padding(forCardCount: max(remainingCount - 1, 0)))
     }
 
     @ViewBuilder

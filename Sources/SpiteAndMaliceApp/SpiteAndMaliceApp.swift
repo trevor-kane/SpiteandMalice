@@ -33,15 +33,7 @@ struct SpiteAndMaliceApp: App {
                     viewModel.provideHint()
                 }
                 .keyboardShortcut("h", modifiers: [.command])
-                .disabled(
-                    !(viewModel.state.currentPlayer.isHuman && viewModel.state.status == .playing) ||
-                    viewModel.hint != nil
-                )
-
-                Toggle(isOn: $viewModel.showsHelp) {
-                    Text("Show Help Panel")
-                }
-                .keyboardShortcut("?", modifiers: [.shift, .command])
+                .disabled(!(viewModel.state.currentPlayer.isHuman && viewModel.state.status == .playing))
             }
             CommandGroup(after: .windowArrangement) {
                 Button("Toggle Full Screen") {

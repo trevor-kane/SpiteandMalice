@@ -11,9 +11,20 @@ final class GameViewModel: ObservableObject {
     }
 
     struct Hint: Equatable {
+        struct Recommendation: Equatable, Identifiable {
+            let id = UUID()
+            let rank: Int
+            let detail: String
+
+            static func == (lhs: Recommendation, rhs: Recommendation) -> Bool {
+                lhs.rank == rhs.rank && lhs.detail == rhs.detail
+            }
+        }
+
         let message: String
         let suggestedOrigin: CardOrigin?
         let suggestedPileIndex: Int?
+        let recommendations: [Recommendation]
     }
 
     struct PlayerSummary: Identifiable, Equatable {
@@ -44,7 +55,6 @@ final class GameViewModel: ObservableObject {
     @Published var hint: Hint?
     @Published var statusBanner: String = ""
     @Published var isAITakingTurn: Bool = false
-    @Published var showsHelp: Bool = false
     @Published private(set) var canUndoTurn: Bool = false
 
     private let engine = GameEngine()
@@ -137,10 +147,6 @@ final class GameViewModel: ObservableObject {
         selection = nil
     }
 
-    func dismissHint() {
-        hint = nil
-    }
-
     func playSelectedCard(on pileIndex: Int) {
         guard state.status == .playing else { return }
         guard state.currentPlayer.isHuman else { return }
@@ -219,27 +225,46 @@ final class GameViewModel: ObservableObject {
         guard state.status == .playing else { return }
         guard state.currentPlayer.isHuman else { return }
 
-        if let suggestion = bestPlay(forPlayerAt: state.currentPlayerIndex) {
-            let cardName = suggestion.card.displayName
-            let pileName = suggestion.pileIndex + 1
+        if hint != nil {
+            hint = nil
+            selection = nil
+            return
+        }
+
+        let rankedPlays = rankedPlayOptions(forPlayerAt: state.currentPlayerIndex)
+
+        if let bestPlay = rankedPlays.first {
+            let recommendations = Array(rankedPlays.prefix(3).enumerated().map { index, option in
+                Hint.Recommendation(
+                    rank: index + 1,
+                    detail: recommendationDescription(for: option)
+                )
+            })
             hint = Hint(
-                message: "Play \(cardName) onto build pile \(pileName).",
-                suggestedOrigin: suggestion.origin,
-                suggestedPileIndex: suggestion.pileIndex
+                message: playMessage(for: bestPlay),
+                suggestedOrigin: bestPlay.origin,
+                suggestedPileIndex: bestPlay.pileIndex,
+                recommendations: recommendations
             )
-            selection = CardSelection(origin: suggestion.origin, card: suggestion.card)
+            selection = CardSelection(origin: bestPlay.origin, card: bestPlay.card)
         } else if let discardSuggestion = bestDiscard(forPlayerAt: state.currentPlayerIndex) {
             hint = Hint(
-                message: "No plays available. Discard \(discardSuggestion.card.displayName) onto pile \(discardSuggestion.discardIndex + 1).",
+                message: "No plays available. Discard \(discardSuggestion.card.displayName) to \(discardPileDescription(for: discardSuggestion.discardIndex)).",
                 suggestedOrigin: .hand(playerIndex: state.currentPlayerIndex, handIndex: discardSuggestion.handIndex),
-                suggestedPileIndex: nil
+                suggestedPileIndex: nil,
+                recommendations: []
             )
             selection = CardSelection(
                 origin: .hand(playerIndex: state.currentPlayerIndex, handIndex: discardSuggestion.handIndex),
                 card: discardSuggestion.card
             )
         } else {
-            hint = Hint(message: "No available moves.", suggestedOrigin: nil, suggestedPileIndex: nil)
+            hint = Hint(
+                message: "No available moves.",
+                suggestedOrigin: nil,
+                suggestedPileIndex: nil,
+                recommendations: []
+            )
         }
     }
 
@@ -251,11 +276,11 @@ final class GameViewModel: ObservableObject {
     }
 
     func discardTitle(for index: Int) -> String {
-        "Discard \(index + 1)"
+        "Discard"
     }
 
     func buildPileTitle(for index: Int) -> String {
-        "Build \(index + 1)"
+        "Build"
     }
 
     func activityLog() -> [GameEvent] {
@@ -413,28 +438,9 @@ final class GameViewModel: ObservableObject {
     }
 
     private func bestPlay(forPlayerAt index: Int) -> (origin: CardOrigin, card: Card, pileIndex: Int)? {
-        guard state.players.indices.contains(index) else { return nil }
-        let player = state.players[index]
-
-        if let stockCard = player.stockTopCard {
-            if let pileIndex = firstPlayablePile(for: stockCard) {
-                return (.stock(playerIndex: index), stockCard, pileIndex)
-            }
+        rankedPlayOptions(forPlayerAt: index).first.map { option in
+            (option.origin, option.card, option.pileIndex)
         }
-
-        for (handIndex, card) in player.hand.enumerated() {
-            if let pileIndex = firstPlayablePile(for: card) {
-                return (.hand(playerIndex: index, handIndex: handIndex), card, pileIndex)
-            }
-        }
-
-        for (discardIndex, pile) in player.discardPiles.enumerated() {
-            guard let card = pile.last else { continue }
-            if let pileIndex = firstPlayablePile(for: card) {
-                return (.discard(playerIndex: index, pileIndex: discardIndex, depth: 0), card, pileIndex)
-            }
-        }
-        return nil
     }
 
     private func bestDiscard(forPlayerAt index: Int) -> (handIndex: Int, discardIndex: Int, card: Card)? {
@@ -453,10 +459,119 @@ final class GameViewModel: ObservableObject {
         return (candidate.offset, discardIndex, candidate.element)
     }
 
-    private func firstPlayablePile(for card: Card) -> Int? {
-        state.buildPiles.enumerated().first { _, pile in
-            canPlay(card: card, on: pile)
-        }?.offset
+    private func rankedPlayOptions(forPlayerAt index: Int) -> [PlayOption] {
+        guard state.players.indices.contains(index) else { return [] }
+        let player = state.players[index]
+        var options: [PlayOption] = []
+        var order: Int = 0
+
+        if let stockCard = player.stockTopCard {
+            let piles = playablePiles(for: stockCard)
+            for pileIndex in piles {
+                options.append(
+                    PlayOption(
+                        origin: .stock(playerIndex: index),
+                        card: stockCard,
+                        pileIndex: pileIndex,
+                        priority: 0,
+                        order: order
+                    )
+                )
+                order += 1
+            }
+        }
+
+        for (handIndex, card) in player.hand.enumerated() {
+            let piles = playablePiles(for: card)
+            for pileIndex in piles {
+                options.append(
+                    PlayOption(
+                        origin: .hand(playerIndex: index, handIndex: handIndex),
+                        card: card,
+                        pileIndex: pileIndex,
+                        priority: 1,
+                        order: order
+                    )
+                )
+                order += 1
+            }
+        }
+
+        for (discardIndex, pile) in player.discardPiles.enumerated() {
+            guard let card = pile.last else { continue }
+            let piles = playablePiles(for: card)
+            for pileIndex in piles {
+                options.append(
+                    PlayOption(
+                        origin: .discard(playerIndex: index, pileIndex: discardIndex, depth: 0),
+                        card: card,
+                        pileIndex: pileIndex,
+                        priority: 2,
+                        order: order
+                    )
+                )
+                order += 1
+            }
+        }
+
+        return options.sorted { lhs, rhs in
+            if lhs.priority == rhs.priority {
+                if lhs.order == rhs.order {
+                    return lhs.pileIndex < rhs.pileIndex
+                }
+                return lhs.order < rhs.order
+            }
+            return lhs.priority < rhs.priority
+        }
+    }
+
+    private func playablePiles(for card: Card) -> [Int] {
+        state.buildPiles.enumerated().compactMap { index, pile in
+            canPlay(card: card, on: pile) ? index : nil
+        }
+    }
+
+    private func playMessage(for option: PlayOption) -> String {
+        "Play \(option.card.displayName) from \(originDescription(for: option.origin)) to \(buildPileDescription(for: option.pileIndex))."
+    }
+
+    private func recommendationDescription(for option: PlayOption) -> String {
+        "\(option.card.displayName) from \(originDescription(for: option.origin)) → \(buildPileDescription(for: option.pileIndex))"
+    }
+
+    private func originDescription(for origin: CardOrigin) -> String {
+        switch origin {
+        case .stock:
+            return "your stock pile"
+        case .hand:
+            return "your hand"
+        case let .discard(_, pileIndex, _):
+            return discardPileDescription(for: pileIndex)
+        }
+    }
+
+    private func discardPileDescription(for index: Int) -> String {
+        let descriptors = ["left", "left-center", "right-center", "right"]
+        if index < descriptors.count {
+            return "your \(descriptors[index]) discard pile"
+        }
+        return "one of your discard piles"
+    }
+
+    private func buildPileDescription(for index: Int) -> String {
+        let descriptors = ["the left build pile", "the left-center build pile", "the right-center build pile", "the right build pile"]
+        if index < descriptors.count {
+            return descriptors[index]
+        }
+        return "a build pile"
+    }
+
+    private struct PlayOption {
+        let origin: CardOrigin
+        let card: Card
+        let pileIndex: Int
+        let priority: Int
+        let order: Int
     }
 }
 #endif
