@@ -6,7 +6,7 @@ struct ControlPanelView: View {
     var onHint: () -> Void
     var onUndo: () -> Void
     var isHintDisabled: Bool
-    var isHintActive: Bool
+    var isHintPinned: Bool
     var isUndoDisabled: Bool
 
     var body: some View {
@@ -28,7 +28,7 @@ struct ControlPanelView: View {
 
     @ViewBuilder
     private var hintButton: some View {
-        if isHintActive {
+        if isHintPinned {
             Button(action: onHint) {
                 Label("Hint", systemImage: "lightbulb.fill")
             }

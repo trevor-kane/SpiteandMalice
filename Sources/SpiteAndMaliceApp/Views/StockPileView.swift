@@ -13,10 +13,11 @@ struct StockPileView: View {
 
     var body: some View {
         VStack(spacing: 12) {
-            ZStack {
+            ZStack(alignment: .topLeading) {
                 stockContent
                     .accessibilityLabel(Text(accessibilityLabel))
             }
+            .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: remainingCount, topScale: 1))
             .overlay(alignment: .topTrailing) {
                 countIndicator
                     .allowsHitTesting(false)
@@ -31,26 +32,26 @@ struct StockPileView: View {
 
     @ViewBuilder
     private var stockContent: some View {
-        ZStack(alignment: .top) {
-            if let card = topCard {
-                if remainingCount > 1 {
-                    PeekingCardStack(
-                        cards: Array(cards.dropLast()),
-                        isFaceDown: isFaceDown,
-                        scale: 0.98
-                    )
-                }
-                interactiveCard(for: card)
-            } else {
-                placeholderCard
+        if let card = topCard {
+            if remainingCount > 1 {
+                PeekingCardStack(
+                    cards: Array(cards.dropLast()),
+                    isFaceDown: true,
+                    scale: 0.98
+                )
             }
+
+            interactiveCard(for: card)
+                .offset(y: PeekingCardStack.topCardOffset(forTotalCount: remainingCount))
+        } else {
+            placeholderCard
+                .frame(height: 98)
         }
-        .padding(.top, PeekingCardStack.padding(forCardCount: max(remainingCount - 1, 0)))
     }
 
     @ViewBuilder
     private func interactiveCard(for card: Card) -> some View {
-        let view = CardView(card: card, isFaceDown: isFaceDown, isHighlighted: isHighlighted, showsGlow: isHighlighted, scale: 1.05)
+        let view = CardView(card: card, isFaceDown: isFaceDown, isHighlighted: isHighlighted, showsGlow: isHighlighted)
         if let action {
             Button(action: action) {
                 view

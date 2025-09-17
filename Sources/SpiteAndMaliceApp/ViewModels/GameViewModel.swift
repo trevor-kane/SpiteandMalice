@@ -53,6 +53,7 @@ final class GameViewModel: ObservableObject {
     }
     @Published var selection: CardSelection?
     @Published var hint: Hint?
+    @Published private(set) var isHintPinned: Bool = false
     @Published var statusBanner: String = ""
     @Published var isAITakingTurn: Bool = false
     @Published private(set) var canUndoTurn: Bool = false
@@ -91,6 +92,7 @@ final class GameViewModel: ObservableObject {
             )
             selection = nil
             hint = nil
+            isHintPinned = false
             statusBanner = "Good luck! Empty your stock pile first to win."
             engine.prepareTurn(state: &state)
             prepareUndoForCurrentPlayer()
@@ -114,7 +116,7 @@ final class GameViewModel: ObservableObject {
         } else {
             selection = CardSelection(origin: .hand(playerIndex: state.currentPlayerIndex, handIndex: index), card: card)
         }
-        hint = nil
+        clearHintUnlessPinned()
     }
 
     func selectStockCard() {
@@ -126,7 +128,7 @@ final class GameViewModel: ObservableObject {
         } else {
             selection = CardSelection(origin: .stock(playerIndex: state.currentPlayerIndex), card: card)
         }
-        hint = nil
+        clearHintUnlessPinned()
     }
 
     func selectDiscardCard(pileIndex: Int) {
@@ -140,7 +142,7 @@ final class GameViewModel: ObservableObject {
         } else {
             selection = CardSelection(origin: .discard(playerIndex: state.currentPlayerIndex, pileIndex: pileIndex, depth: 0), card: card)
         }
-        hint = nil
+        clearHintUnlessPinned()
     }
 
     func clearSelection() {
@@ -156,7 +158,7 @@ final class GameViewModel: ObservableObject {
         do {
             _ = try engine.play(origin: origin, toBuildPile: pileIndex, state: &state)
             self.selection = nil
-            hint = nil
+            clearHintUnlessPinned()
             if case .stock = origin {
                 undoStack.removeAll()
                 hasPlayedStockThisTurn = true
@@ -167,6 +169,7 @@ final class GameViewModel: ObservableObject {
             if state.status == .playing, state.currentPlayer.isHuman {
                 statusBanner = "Card played. Continue your turn."
             }
+            refreshPinnedHint()
         } catch {
             statusBanner = error.localizedDescription
         }
@@ -183,7 +186,7 @@ final class GameViewModel: ObservableObject {
         do {
             _ = try engine.discard(handIndex: handIndex, toDiscardPile: discardIndex, state: &state)
             self.selection = nil
-            hint = nil
+            clearHintUnlessPinned()
             if state.status == .playing && !hasPlayedStockThisTurn {
                 undoStack.append(previousState)
             }
@@ -192,6 +195,7 @@ final class GameViewModel: ObservableObject {
                 statusBanner = "Card discarded. Passing the turn..."
                 scheduleAutomaticTurnAdvance()
             }
+            refreshPinnedHint()
         } catch {
             statusBanner = error.localizedDescription
         }
@@ -216,56 +220,26 @@ final class GameViewModel: ObservableObject {
         pendingAdvanceTask = nil
         state = previousState
         selection = nil
-        hint = nil
+        clearHintUnlessPinned()
         updateStatusBanner()
         statusBanner = "Last move undone. Continue your turn."
+        refreshPinnedHint()
     }
 
     func provideHint() {
         guard state.status == .playing else { return }
-        guard state.currentPlayer.isHuman else { return }
 
-        if hint != nil {
+        if isHintPinned {
+            isHintPinned = false
             hint = nil
             selection = nil
             return
         }
 
-        let rankedPlays = rankedPlayOptions(forPlayerAt: state.currentPlayerIndex)
+        guard state.currentPlayer.isHuman else { return }
 
-        if let bestPlay = rankedPlays.first {
-            let recommendations = Array(rankedPlays.prefix(3).enumerated().map { index, option in
-                Hint.Recommendation(
-                    rank: index + 1,
-                    detail: recommendationDescription(for: option)
-                )
-            })
-            hint = Hint(
-                message: playMessage(for: bestPlay),
-                suggestedOrigin: bestPlay.origin,
-                suggestedPileIndex: bestPlay.pileIndex,
-                recommendations: recommendations
-            )
-            selection = CardSelection(origin: bestPlay.origin, card: bestPlay.card)
-        } else if let discardSuggestion = bestDiscard(forPlayerAt: state.currentPlayerIndex) {
-            hint = Hint(
-                message: "No plays available. Discard \(discardSuggestion.card.displayName) to \(discardPileDescription(for: discardSuggestion.discardIndex)).",
-                suggestedOrigin: .hand(playerIndex: state.currentPlayerIndex, handIndex: discardSuggestion.handIndex),
-                suggestedPileIndex: nil,
-                recommendations: []
-            )
-            selection = CardSelection(
-                origin: .hand(playerIndex: state.currentPlayerIndex, handIndex: discardSuggestion.handIndex),
-                card: discardSuggestion.card
-            )
-        } else {
-            hint = Hint(
-                message: "No available moves.",
-                suggestedOrigin: nil,
-                suggestedPileIndex: nil,
-                recommendations: []
-            )
-        }
+        isHintPinned = true
+        refreshPinnedHint()
     }
 
     func isValidTarget(for pileIndex: Int) -> Bool {
@@ -324,9 +298,92 @@ final class GameViewModel: ObservableObject {
         )
     }
 
+    private func clearHintUnlessPinned() {
+        if !isHintPinned {
+            hint = nil
+        }
+    }
+
+    private func refreshPinnedHint() {
+        guard isHintPinned else { return }
+
+        guard state.status == .playing else {
+            hint = nil
+            selection = nil
+            return
+        }
+
+        guard let humanIndex = state.players.firstIndex(where: { $0.isHuman }) else {
+            hint = nil
+            selection = nil
+            return
+        }
+
+        guard state.currentPlayerIndex == humanIndex else {
+            hint = Hint(
+                message: "Waiting for your turn. Tips will resume once you're up.",
+                suggestedOrigin: nil,
+                suggestedPileIndex: nil,
+                recommendations: []
+            )
+            selection = nil
+            return
+        }
+
+        if let payload = hintPayload(for: humanIndex) {
+            hint = payload.hint
+            selection = payload.selection
+        } else {
+            hint = Hint(
+                message: "No plays available right now. Discard to set up your next turn.",
+                suggestedOrigin: nil,
+                suggestedPileIndex: nil,
+                recommendations: []
+            )
+            selection = nil
+        }
+    }
+
+    private func hintPayload(for playerIndex: Int) -> (hint: Hint, selection: CardSelection?)? {
+        let rankedPlays = rankedPlayOptions(forPlayerAt: playerIndex)
+
+        if let bestPlay = rankedPlays.first {
+            let recommendations = Array(rankedPlays.prefix(3).enumerated().map { index, option in
+                Hint.Recommendation(
+                    rank: index + 1,
+                    detail: recommendationDescription(for: option)
+                )
+            })
+            let hint = Hint(
+                message: playMessage(for: bestPlay),
+                suggestedOrigin: bestPlay.origin,
+                suggestedPileIndex: bestPlay.pileIndex,
+                recommendations: recommendations
+            )
+            let selection = CardSelection(origin: bestPlay.origin, card: bestPlay.card)
+            return (hint, selection)
+        }
+
+        if let discardSuggestion = bestDiscard(forPlayerAt: playerIndex) {
+            let hint = Hint(
+                message: "No plays available. Discard \(discardSuggestion.card.displayName) to \(discardPileDescription(for: discardSuggestion.discardIndex)).",
+                suggestedOrigin: .hand(playerIndex: playerIndex, handIndex: discardSuggestion.handIndex),
+                suggestedPileIndex: nil,
+                recommendations: []
+            )
+            let selection = CardSelection(
+                origin: .hand(playerIndex: playerIndex, handIndex: discardSuggestion.handIndex),
+                card: discardSuggestion.card
+            )
+            return (hint, selection)
+        }
+
+        return nil
+    }
+
     private func advanceToNextPlayer() {
         selection = nil
-        hint = nil
+        clearHintUnlessPinned()
         undoStack.removeAll()
         hasPlayedStockThisTurn = false
         pendingAdvanceTask?.cancel()
@@ -344,6 +401,8 @@ final class GameViewModel: ObservableObject {
                 scheduleAITurn()
             }
         }
+
+        refreshPinnedHint()
     }
 
     private func scheduleAITurn() {

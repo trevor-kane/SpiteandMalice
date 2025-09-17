@@ -15,10 +15,10 @@ struct HintOverlayView: View {
                     .background(Circle().fill(Color.yellow.opacity(0.18)))
 
                 VStack(alignment: .leading, spacing: 2) {
-                    Text("Helpful tip")
+                    Text("Tips active")
                         .font(.system(size: 15, weight: .semibold, design: .rounded))
                         .foregroundColor(.white.opacity(0.92))
-                    Text("Tap Hint again to dismiss")
+                    Text("Hints stay on until you toggle them off")
                         .font(.system(size: 11.5, weight: .medium, design: .rounded))
                         .foregroundColor(.white.opacity(0.6))
                 }
@@ -65,19 +65,14 @@ struct HintOverlayView: View {
         .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .fill(
-                    LinearGradient(
-                        colors: [Color(red: 0.22, green: 0.28, blue: 0.48).opacity(0.95), Color(red: 0.15, green: 0.18, blue: 0.32).opacity(0.92)],
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color.white.opacity(0.08))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 26, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+                .stroke(Color.white.opacity(0.22), lineWidth: 1)
         )
-        .shadow(color: Color.black.opacity(0.28), radius: 14, y: 6)
+        .shadow(color: Color.black.opacity(0.25), radius: 14, y: 6)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 }
 #endif

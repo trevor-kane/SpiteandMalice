@@ -24,7 +24,7 @@ struct BuildPileView: View {
     @ViewBuilder
     private var pileContent: some View {
         if let top = pile.topCard {
-            ZStack(alignment: .top) {
+            ZStack(alignment: .topLeading) {
                 if cardCount > 1 {
                     PeekingCardStack(
                         cards: Array(pile.cards.dropLast().map { $0.card }),
@@ -33,8 +33,9 @@ struct BuildPileView: View {
                     )
                 }
                 interactiveCard(for: top)
+                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cardCount))
             }
-            .padding(.top, PeekingCardStack.padding(forCardCount: max(cardCount - 1, 0)))
+            .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: cardCount, topScale: 1))
         } else {
             placeholderCard
         }

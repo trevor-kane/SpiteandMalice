@@ -22,7 +22,7 @@ struct DiscardPileView: View {
 
     @ViewBuilder
     private var discardContent: some View {
-        ZStack(alignment: .top) {
+        ZStack(alignment: .topLeading) {
             if cards.count > 1 {
                 PeekingCardStack(
                     cards: Array(cards.dropLast()),
@@ -33,11 +33,12 @@ struct DiscardPileView: View {
 
             if let card = cards.last {
                 interactiveTopCard(card: card)
+                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cards.count))
             } else {
                 placeholderCard
             }
         }
-        .padding(.top, PeekingCardStack.padding(forCardCount: max(cards.count - 1, 0)))
+        .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: cards.count, topScale: 0.95))
     }
 
     @ViewBuilder
@@ -58,11 +59,13 @@ struct DiscardPileView: View {
         if let action {
             Button(action: action) {
                 CardPlaceholder(title: "Discard")
+                    .scaleEffect(0.95)
             }
             .buttonStyle(.plain)
             .opacity(isInteractive ? 1 : 0.65)
         } else {
             CardPlaceholder(title: "Discard")
+                .scaleEffect(0.95)
                 .opacity(isInteractive ? 1 : 0.65)
         }
     }
