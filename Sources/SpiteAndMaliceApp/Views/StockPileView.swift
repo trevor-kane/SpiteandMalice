@@ -12,15 +12,15 @@ struct StockPileView: View {
     private var topCard: Card? { cards.last }
 
     var body: some View {
-        VStack(spacing: 10) {
+        VStack(spacing: 12) {
             ZStack {
                 stockContent
                     .accessibilityLabel(Text(accessibilityLabel))
             }
-            .overlay(alignment: .leading) {
+            .overlay(alignment: .topTrailing) {
                 countIndicator
                     .allowsHitTesting(false)
-                    .offset(x: -72)
+                    .padding(8)
             }
 
             Text("Stock")
@@ -74,35 +74,31 @@ struct StockPileView: View {
     }
 
     private var countIndicator: some View {
-        VStack(spacing: 4) {
+        VStack(spacing: 6) {
             Image(systemName: "rectangle.stack.fill")
-                .font(.system(size: 16, weight: .semibold))
+                .font(.system(size: 14, weight: .semibold))
             Text("\(remainingCount)")
                 .font(.system(size: 16, weight: .bold, design: .rounded))
-            Text("Left")
-                .font(.system(size: 10, weight: .medium, design: .rounded))
-                .opacity(0.8)
         }
         .foregroundStyle(Color.white)
         .padding(.horizontal, 12)
-        .padding(.vertical, 12)
+        .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
                 .fill(
                     LinearGradient(
-                        colors: [Color.white.opacity(0.26), Color.white.opacity(0.1)],
+                        colors: [Color.white.opacity(0.28), Color.white.opacity(0.12)],
                         startPoint: .topLeading,
                         endPoint: .bottomTrailing
                     )
                 )
-                .opacity(0.95)
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 18, style: .continuous)
-                .stroke(Color.white.opacity(0.35), lineWidth: 0.9)
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(0.32), lineWidth: 0.9)
         )
-        .shadow(color: Color.black.opacity(0.35), radius: 8, y: 4)
-        .frame(minWidth: 68)
+        .shadow(color: Color.black.opacity(0.3), radius: 6, y: 3)
+        .frame(minWidth: 62)
         .opacity(remainingCount == 0 ? 0.65 : 1)
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Stock cards remaining: \(remainingCount)"))

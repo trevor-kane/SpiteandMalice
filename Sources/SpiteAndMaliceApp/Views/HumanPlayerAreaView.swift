@@ -21,7 +21,7 @@ struct HumanPlayerAreaView: View {
         VStack(spacing: 20) {
             PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(alignment: .top, spacing: 22) {
+            HStack(alignment: .top, spacing: 26) {
                 StockPileView(
                     cards: player.stockPile,
                     isFaceDown: false,
@@ -41,7 +41,7 @@ struct HumanPlayerAreaView: View {
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
 
             HandView(
                 cards: player.hand,
@@ -56,7 +56,7 @@ struct HumanPlayerAreaView: View {
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.08))
         )
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 
