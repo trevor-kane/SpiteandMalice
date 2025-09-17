@@ -10,7 +10,7 @@ struct OpponentAreaView: View {
         VStack(spacing: 18) {
             PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
                 .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(spacing: 22) {
+            HStack(alignment: .top, spacing: 26) {
                 StockPileView(
                     cards: player.stockPile,
                     isFaceDown: false,
@@ -31,7 +31,7 @@ struct OpponentAreaView: View {
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
         .padding(.vertical, 20)
         .padding(.horizontal, 22)
@@ -39,7 +39,7 @@ struct OpponentAreaView: View {
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.05))
         )
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 }
 #endif

@@ -5,31 +5,31 @@ import SpiteAndMaliceCore
 struct ContentView: View {
     @EnvironmentObject private var viewModel: GameViewModel
 
+    @State private var zoomScale: CGFloat = 1.0
+
     var body: some View {
         let summary = viewModel.gameSummary
         ZStack(alignment: .top) {
             backgroundView
             ScrollView(.vertical, showsIndicators: true) {
                 mainContent
+                    .scaleEffect(zoomScale, anchor: .top)
+                    .padding(.top, 16)
                     .frame(maxWidth: .infinity)
             }
             .blur(radius: summary == nil ? 0 : 8)
             .allowsHitTesting(summary == nil)
-
-            if let hint = viewModel.hint, summary == nil {
-                VStack {
-                    HintOverlayView(message: hint.message, recommendations: hint.recommendations)
-                    Spacer()
-                }
-                .padding(.top, 24)
-                .transition(.opacity)
-            }
 
             if let summary {
                 WinOverlayView(summary: summary, onPlayAgain: { viewModel.startNewGame() })
                     .padding(.horizontal, 32)
                     .transition(.opacity.combined(with: .scale))
             }
+        }
+        .overlay(alignment: .topTrailing) {
+            ZoomControlView(zoomLevel: $zoomScale)
+                .padding(.top, 16)
+                .padding(.trailing, 24)
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: summary != nil)
     }
@@ -74,6 +74,12 @@ struct ContentView: View {
                 currentPlayerIndex: viewModel.state.currentPlayerIndex,
                 turn: viewModel.state.turn
             )
+
+            if let hint = viewModel.hint, viewModel.gameSummary == nil {
+                HintOverlayView(message: hint.message, recommendations: hint.recommendations)
+                    .transition(.move(edge: .top).combined(with: .opacity))
+            }
+
             Spacer(minLength: 0)
         }
         .frame(width: 300, alignment: .leading)
@@ -131,9 +137,9 @@ struct ContentView: View {
                     recycleCount: viewModel.state.recyclePile.count
                 )
             }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            .frame(maxWidth: .infinity, alignment: .center)
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .frame(maxWidth: .infinity, alignment: .center)
     }
 
     @ViewBuilder
