@@ -33,29 +33,19 @@ struct DiscardPileView: View {
                 placeholderCard
             }
         }
-        .overlay(alignment: .topTrailing) {
-            if cards.count > 1 && !isRevealed {
-                PileBadge {
-                    Text("\(cards.count)")
-                        .font(.system(size: 11, weight: .semibold, design: .rounded))
-                }
-                .padding(8)
-            }
-        }
-        .overlay(alignment: .topLeading) {
-            if !cards.isEmpty, let onRevealToggle {
-                Button(action: onRevealToggle) {
-                    PileBadge {
-                        HStack(spacing: 6) {
-                            Image(systemName: isRevealed ? "eye.slash.fill" : "eye.fill")
-                                .font(.system(size: 12, weight: .semibold))
-                            Text(isRevealed ? "Hide" : "View")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
+        .overlay(alignment: .top) {
+            if !cards.isEmpty {
+                PilePeekHandle(action: onRevealToggle) {
+                    HStack(spacing: 8) {
+                        Text("\(cards.count)")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        if onRevealToggle != nil {
+                            Image(systemName: isRevealed ? "chevron.up" : "chevron.down")
+                                .font(.system(size: 11, weight: .bold))
                         }
                     }
                 }
-                .buttonStyle(.plain)
-                .padding(8)
+                .offset(y: -20)
             }
         }
     }

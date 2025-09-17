@@ -12,14 +12,12 @@ struct StockPileView: View {
     private var topCard: Card? { cards.last }
 
     var body: some View {
-        VStack(spacing: 6) {
-            stockContent
-                .overlay(alignment: .topTrailing) {
-                    if remainingCount > 0 {
-                        countBadge
-                    }
-                }
-                .accessibilityLabel(Text(accessibilityLabel))
+        VStack(spacing: 10) {
+            HStack(alignment: .top, spacing: 16) {
+                countIndicator
+                stockContent
+                    .accessibilityLabel(Text(accessibilityLabel))
+            }
 
             Text("Stock")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -61,13 +59,39 @@ struct StockPileView: View {
         }
     }
 
-    private var countBadge: some View {
-        Text("\(remainingCount)")
-            .font(.system(size: 12, weight: .bold, design: .rounded))
-            .foregroundColor(.white)
-            .padding(6)
-            .background(Circle().fill(Color.black.opacity(0.45)))
-            .offset(x: 26, y: -32)
+    private var countIndicator: some View {
+        VStack(spacing: 4) {
+            Image(systemName: "rectangle.stack.fill")
+                .font(.system(size: 16, weight: .semibold))
+            Text("\(remainingCount)")
+                .font(.system(size: 16, weight: .bold, design: .rounded))
+            Text("Left")
+                .font(.system(size: 10, weight: .medium, design: .rounded))
+                .opacity(0.8)
+        }
+        .foregroundStyle(Color.white)
+        .padding(.horizontal, 12)
+        .padding(.vertical, 12)
+        .background(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [Color.white.opacity(0.26), Color.white.opacity(0.1)],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+                .opacity(0.95)
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 18, style: .continuous)
+                .stroke(Color.white.opacity(0.35), lineWidth: 0.9)
+        )
+        .shadow(color: Color.black.opacity(0.35), radius: 8, y: 4)
+        .frame(minWidth: 68)
+        .opacity(remainingCount == 0 ? 0.65 : 1)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Stock cards remaining: \(remainingCount)"))
     }
 
     private var accessibilityLabel: String {

@@ -15,29 +15,19 @@ struct BuildPileView: View {
     var body: some View {
         VStack(spacing: 10) {
             pileContent
-                .overlay(alignment: .topLeading) {
-                    if cardCount > 0 && !isRevealed {
-                        PileBadge {
-                            Text("\(cardCount) / \(BuildPile.targetSequenceCount)")
-                                .font(.system(size: 11, weight: .semibold, design: .rounded))
-                        }
-                        .padding(8)
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if cardCount > 0, let onRevealToggle {
-                        Button(action: onRevealToggle) {
-                            PileBadge {
-                                HStack(spacing: 6) {
-                                    Image(systemName: isRevealed ? "eye.slash.fill" : "eye.fill")
-                                        .font(.system(size: 12, weight: .semibold))
-                                    Text(isRevealed ? "Hide" : "View")
-                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                .overlay(alignment: .top) {
+                    if cardCount > 0 {
+                        PilePeekHandle(action: onRevealToggle) {
+                            HStack(spacing: 8) {
+                                Text("\(cardCount) / \(BuildPile.targetSequenceCount)")
+                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                if onRevealToggle != nil {
+                                    Image(systemName: isRevealed ? "chevron.up" : "chevron.down")
+                                        .font(.system(size: 11, weight: .bold))
                                 }
                             }
                         }
-                        .buttonStyle(.plain)
-                        .padding(8)
+                        .offset(y: -22)
                     }
                 }
                 .accessibilityLabel(Text(pileAccessibilityLabel))
