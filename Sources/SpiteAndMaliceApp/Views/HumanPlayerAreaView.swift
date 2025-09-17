@@ -20,9 +20,10 @@ struct HumanPlayerAreaView: View {
     }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
+        VStack(spacing: 20) {
             PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
-            HStack(alignment: .top, spacing: 18) {
+                .frame(maxWidth: .infinity, alignment: .leading)
+            HStack(alignment: .top, spacing: 22) {
                 StockPileView(
                     cards: player.stockPile,
                     isFaceDown: false,
@@ -30,7 +31,7 @@ struct HumanPlayerAreaView: View {
                     action: onSelectStock
                 )
 
-                HStack(spacing: 14) {
+                HStack(spacing: 18) {
                     ForEach(Array(player.discardPiles.indices), id: \.self) { index in
                         DiscardPileView(
                             cards: player.discardPiles[index],
@@ -43,20 +44,23 @@ struct HumanPlayerAreaView: View {
                         )
                     }
                 }
-                Spacer()
             }
+            .frame(maxWidth: .infinity, alignment: .center)
 
             HandView(
                 cards: player.hand,
                 selectedCardID: selection?.card.id,
                 tapAction: onSelectHandCard
             )
+            .frame(maxWidth: .infinity, alignment: .center)
         }
-        .padding()
+        .padding(.vertical, 22)
+        .padding(.horizontal, 24)
         .background(
             RoundedRectangle(cornerRadius: 20)
                 .fill(Color.white.opacity(0.08))
         )
+        .frame(maxWidth: .infinity)
     }
 }
 

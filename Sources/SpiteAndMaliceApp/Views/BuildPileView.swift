@@ -15,23 +15,19 @@ struct BuildPileView: View {
     var body: some View {
         VStack(spacing: 10) {
             pileContent
-                .overlay(alignment: .topLeading) {
-                    if cardCount > 0 && !isRevealed {
-                        ProgressBadge(currentCount: cardCount)
-                            .offset(x: 10, y: -10)
-                    }
-                }
-                .overlay(alignment: .topTrailing) {
-                    if cardCount > 0, let onRevealToggle {
-                        Button(action: onRevealToggle) {
-                            Image(systemName: isRevealed ? "eye.slash.fill" : "eye.fill")
-                                .font(.system(size: 16, weight: .bold))
-                                .foregroundColor(.white)
-                                .padding(6)
-                                .background(Circle().fill(Color.black.opacity(0.55)))
+                .overlay(alignment: .top) {
+                    if cardCount > 0 {
+                        PilePeekHandle(action: onRevealToggle) {
+                            HStack(spacing: 8) {
+                                Text("\(cardCount) / \(BuildPile.targetSequenceCount)")
+                                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                if onRevealToggle != nil {
+                                    Image(systemName: isRevealed ? "chevron.up" : "chevron.down")
+                                        .font(.system(size: 11, weight: .bold))
+                                }
+                            }
                         }
-                        .buttonStyle(.plain)
-                        .padding(6)
+                        .offset(y: -22)
                     }
                 }
                 .accessibilityLabel(Text(pileAccessibilityLabel))
@@ -47,7 +43,7 @@ struct BuildPileView: View {
     private var pileContent: some View {
         if isRevealed && cardCount > 0 {
             CardStackRevealView(cards: pile.cards.map { $0.card })
-        } else if let top = pile.topCard?.card {
+        } else if let top = pile.topCard {
             interactiveCard(for: top)
         } else {
             placeholderCard
@@ -55,8 +51,14 @@ struct BuildPileView: View {
     }
 
     @ViewBuilder
-    private func interactiveCard(for card: Card) -> some View {
-        let view = CardView(card: card, isHighlighted: isActiveTarget, showsGlow: isActiveTarget)
+    private func interactiveCard(for playedCard: PlayedCard) -> some View {
+        let resolvedOverride = playedCard.card.isWild ? playedCard.resolvedValue : nil
+        let view = CardView(
+            card: playedCard.card,
+            isHighlighted: isActiveTarget,
+            showsGlow: isActiveTarget,
+            resolvedValueOverride: resolvedOverride
+        )
         if let action {
             Button(action: action) {
                 view
@@ -90,23 +92,6 @@ struct BuildPileView: View {
             return "Build pile showing \(top.value.accessibilityLabel)."
         } else {
             return "Empty build pile awaiting an Ace."
-        }
-    }
-}
-
-private struct ProgressBadge: View {
-    var currentCount: Int
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(Color.black.opacity(0.35))
-                .frame(width: 32, height: 32)
-            VStack(spacing: 2) {
-                Text("\(currentCount) / \(BuildPile.targetSequenceCount)")
-                    .font(.system(size: 11, weight: .semibold))
-                    .foregroundColor(.white)
-            }
         }
     }
 }
