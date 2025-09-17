@@ -372,10 +372,10 @@ final class GameViewModel: ObservableObject {
 
     private func scheduleAutomaticTurnAdvance() {
         pendingAdvanceTask?.cancel()
-        pendingAdvanceTask = Task { @MainActor [weak self] in
+        pendingAdvanceTask = Task { [weak self] in
             try? await Task.sleep(nanoseconds: 350_000_000)
             guard let self, !Task.isCancelled else { return }
-            self.finishTurnAfterDiscard()
+            await self.finishTurnAfterDiscard()
         }
     }
 
