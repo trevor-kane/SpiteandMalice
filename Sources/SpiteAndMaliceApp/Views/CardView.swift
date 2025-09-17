@@ -37,7 +37,7 @@ struct CardView: View {
                         .foregroundColor(.white.opacity(0.8))
                 }
             } else {
-                VStack(spacing: usesResolvedOverride ? 6 : 4) {
+                VStack(spacing: (usesResolvedOverride || card.isWild) ? 6 : 0) {
                     Text(primaryLabel)
                         .font(.system(size: usesResolvedOverride ? 40 : 34, weight: .heavy, design: .rounded))
                         .foregroundColor(CardPalette.textColor(for: card))
@@ -78,13 +78,9 @@ struct CardView: View {
             .font(.system(size: 12.5, weight: .semibold, design: .rounded))
             .foregroundColor(.white.opacity(0.92))
         } else if card.isWild {
-            Text("Wild King")
+            Text("Wild")
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundColor(.white.opacity(0.9))
-        } else {
-            Text(card.value.accessibilityLabel)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.white.opacity(0.85))
         }
     }
 

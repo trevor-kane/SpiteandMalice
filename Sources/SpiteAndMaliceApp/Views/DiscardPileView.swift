@@ -8,8 +8,6 @@ struct DiscardPileView: View {
     var isHighlighted: Bool = false
     var isInteractive: Bool = false
     var action: (() -> Void)?
-    var isRevealed: Bool = false
-    var onRevealToggle: (() -> Void)?
 
     var body: some View {
         VStack(spacing: 6) {
@@ -24,30 +22,22 @@ struct DiscardPileView: View {
 
     @ViewBuilder
     private var discardContent: some View {
-        ZStack {
-            if isRevealed && !cards.isEmpty {
-                CardStackRevealView(cards: cards)
-            } else if let card = cards.last {
+        ZStack(alignment: .top) {
+            if cards.count > 1 {
+                PeekingCardStack(
+                    cards: Array(cards.dropLast()),
+                    isFaceDown: false,
+                    scale: 0.92
+                )
+            }
+
+            if let card = cards.last {
                 interactiveTopCard(card: card)
             } else {
                 placeholderCard
             }
         }
-        .overlay(alignment: .top) {
-            if cards.count >= 2 {
-                PilePeekHandle(action: onRevealToggle) {
-                    HStack(spacing: 8) {
-                        Text("\(cards.count)")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded))
-                        if onRevealToggle != nil {
-                            Image(systemName: isRevealed ? "chevron.up" : "chevron.down")
-                                .font(.system(size: 11, weight: .bold))
-                        }
-                    }
-                }
-                .offset(y: -20)
-            }
-        }
+        .padding(.top, PeekingCardStack.padding(forCardCount: max(cards.count - 1, 0)))
     }
 
     @ViewBuilder

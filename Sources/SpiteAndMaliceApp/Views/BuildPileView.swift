@@ -7,36 +7,13 @@ struct BuildPileView: View {
     var title: String
     var isActiveTarget: Bool
     var action: (() -> Void)?
-    var isRevealed: Bool = false
-    var onRevealToggle: (() -> Void)?
 
     private var cardCount: Int { pile.cards.count }
 
     var body: some View {
         VStack(spacing: 10) {
             pileContent
-                .overlay(alignment: .top) {
-                    if cardCount >= 2 {
-                        PilePeekHandle(action: onRevealToggle) {
-                            HStack(alignment: .center, spacing: 8) {
-                                VStack(spacing: 2) {
-                                    Text("\(cardCount)")
-                                        .font(.system(size: 13, weight: .semibold, design: .rounded))
-                                    Text("of \(BuildPile.targetSequenceCount)")
-                                        .font(.system(size: 10, weight: .medium, design: .rounded))
-                                        .opacity(0.8)
-                                }
-                                if onRevealToggle != nil {
-                                    Image(systemName: isRevealed ? "chevron.up" : "chevron.down")
-                                        .font(.system(size: 11, weight: .bold))
-                                }
-                            }
-                        }
-                        .offset(y: -22)
-                    }
-                }
                 .accessibilityLabel(Text(pileAccessibilityLabel))
-                .animation(.spring(response: 0.45, dampingFraction: 0.8), value: isRevealed)
 
             Text(title)
                 .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -46,10 +23,18 @@ struct BuildPileView: View {
 
     @ViewBuilder
     private var pileContent: some View {
-        if isRevealed && cardCount > 0 {
-            CardStackRevealView(cards: pile.cards.map { $0.card })
-        } else if let top = pile.topCard {
-            interactiveCard(for: top)
+        if let top = pile.topCard {
+            ZStack(alignment: .top) {
+                if cardCount > 1 {
+                    PeekingCardStack(
+                        cards: Array(pile.cards.dropLast().map { $0.card }),
+                        isFaceDown: false,
+                        scale: 0.94
+                    )
+                }
+                interactiveCard(for: top)
+            }
+            .padding(.top, PeekingCardStack.padding(forCardCount: max(cardCount - 1, 0)))
         } else {
             placeholderCard
         }
@@ -76,7 +61,7 @@ struct BuildPileView: View {
 
     @ViewBuilder
     private var placeholderCard: some View {
-        let placeholder = CardPlaceholder(title: "Start with\nAce")
+        let placeholder = CardPlaceholder(title: "Start\nwith 1")
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(isActiveTarget ? Color.yellow : Color.white.opacity(0.2), lineWidth: isActiveTarget ? 3 : 1)

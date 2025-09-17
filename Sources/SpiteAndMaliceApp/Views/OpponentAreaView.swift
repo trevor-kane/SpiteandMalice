@@ -5,8 +5,6 @@ import SpiteAndMaliceCore
 struct OpponentAreaView: View {
     var player: Player
     var isCurrentTurn: Bool
-    var revealedDiscardIndices: Set<Int>
-    var onToggleDiscardReveal: (Int) -> Void
 
     var body: some View {
         VStack(spacing: 18) {
@@ -25,17 +23,15 @@ struct OpponentAreaView: View {
                         let pile = player.discardPiles[index]
                         DiscardPileView(
                             cards: pile,
-                            title: "Discard \(index + 1)",
+                            title: "Discard",
                             isHighlighted: isCurrentTurn && !pile.isEmpty,
                             isInteractive: false,
-                            action: nil,
-                            isRevealed: revealedDiscardIndices.contains(index),
-                            onRevealToggle: { onToggleDiscardReveal(index) }
+                            action: nil
                         )
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 20)
         .padding(.horizontal, 22)

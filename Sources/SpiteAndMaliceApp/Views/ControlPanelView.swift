@@ -8,7 +8,6 @@ struct ControlPanelView: View {
     var isHintDisabled: Bool
     var isHintActive: Bool
     var isUndoDisabled: Bool
-    @Binding var showsHelp: Bool
 
     var body: some View {
         HStack(spacing: 16) {
@@ -24,12 +23,6 @@ struct ControlPanelView: View {
             }
             .buttonStyle(.bordered)
             .disabled(isUndoDisabled)
-
-            Toggle(isOn: $showsHelp.animation()) {
-                Label("Show Help", systemImage: "questionmark.circle")
-            }
-            .toggleStyle(.switch)
-            .foregroundStyle(.white.opacity(0.85))
         }
     }
 
@@ -41,7 +34,6 @@ struct ControlPanelView: View {
             }
             .buttonStyle(.borderedProminent)
             .tint(Color.yellow.opacity(0.85))
-            .disabled(true)
         } else {
             Button(action: onHint) {
                 Label("Hint", systemImage: "lightbulb")

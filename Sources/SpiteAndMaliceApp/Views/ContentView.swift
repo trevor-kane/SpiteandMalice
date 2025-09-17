@@ -2,15 +2,8 @@
 import SwiftUI
 import SpiteAndMaliceCore
 
-private struct DiscardIdentifier: Hashable {
-    let playerID: UUID
-    let pileIndex: Int
-}
-
 struct ContentView: View {
     @EnvironmentObject private var viewModel: GameViewModel
-    @State private var revealedBuildPileIDs: Set<UUID> = []
-    @State private var revealedDiscardIdentifiers: Set<DiscardIdentifier> = []
 
     var body: some View {
         let summary = viewModel.gameSummary
@@ -23,9 +16,9 @@ struct ContentView: View {
             .blur(radius: summary == nil ? 0 : 8)
             .allowsHitTesting(summary == nil)
 
-            if let hint = viewModel.hint?.message, summary == nil {
+            if let hint = viewModel.hint, summary == nil {
                 VStack {
-                    HintOverlayView(message: hint, onDismiss: { viewModel.dismissHint() })
+                    HintOverlayView(message: hint.message, recommendations: hint.recommendations)
                     Spacer()
                 }
                 .padding(.top, 24)
@@ -42,7 +35,7 @@ struct ContentView: View {
     }
 
     private var mainContent: some View {
-        HStack(alignment: .top, spacing: 32) {
+        HStack(alignment: .top, spacing: 56) {
             leftSidebar
 
             VStack(alignment: .leading, spacing: 32) {
@@ -71,6 +64,7 @@ struct ContentView: View {
             Spacer(minLength: 0)
         }
         .frame(width: 300, alignment: .leading)
+        .padding(.trailing, 12)
     }
 
     private var rightSidebar: some View {
@@ -83,6 +77,7 @@ struct ContentView: View {
             Spacer(minLength: 0)
         }
         .frame(width: 300, alignment: .leading)
+        .padding(.leading, 12)
     }
 
     private var backgroundView: some View {
@@ -111,13 +106,11 @@ struct ContentView: View {
             ForEach(Array(viewModel.state.players.enumerated()).filter { !$0.element.isHuman }, id: \.element.id) { item in
                 OpponentAreaView(
                     player: item.element,
-                    isCurrentTurn: viewModel.state.currentPlayerIndex == item.offset,
-                    revealedDiscardIndices: revealedDiscardIndices(for: item.element.id),
-                    onToggleDiscardReveal: { index in toggleDiscardReveal(for: item.element.id, pileIndex: index) }
+                    isCurrentTurn: viewModel.state.currentPlayerIndex == item.offset
                 )
             }
         }
-        .frame(maxWidth: .infinity, alignment: .center)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     private var centrePlayArea: some View {
@@ -128,9 +121,7 @@ struct ContentView: View {
                         pile: pile,
                         title: viewModel.buildPileTitle(for: index),
                         isActiveTarget: viewModel.isValidTarget(for: index),
-                        action: viewModel.state.currentPlayer.isHuman ? { viewModel.playSelectedCard(on: index) } : nil,
-                        isRevealed: revealedBuildPileIDs.contains(pile.id),
-                        onRevealToggle: { toggleBuildReveal(id: pile.id) }
+                        action: viewModel.state.currentPlayer.isHuman ? { viewModel.playSelectedCard(on: index) } : nil
                     )
                     .disabled(!viewModel.state.currentPlayer.isHuman)
                 }
@@ -140,12 +131,9 @@ struct ContentView: View {
                     recycleCount: viewModel.state.recyclePile.count
                 )
             }
-
-            if viewModel.showsHelp {
-                helpPanel
-            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .frame(maxWidth: .infinity)
+        .frame(maxWidth: .infinity, alignment: .leading)
     }
 
     @ViewBuilder
@@ -159,9 +147,7 @@ struct ContentView: View {
                 selection: viewModel.selection,
                 onSelectStock: viewModel.selectStockCard,
                 onTapDiscard: { index in viewModel.handleDiscardTap(index) },
-                onSelectHandCard: { index in viewModel.selectHandCard(at: index) },
-                revealedDiscardIndices: revealedDiscardIndices(for: player.id),
-                onToggleDiscardReveal: { index in toggleDiscardReveal(for: player.id, pileIndex: index) }
+                onSelectHandCard: { index in viewModel.selectHandCard(at: index) }
             )
         }
     }
@@ -173,51 +159,9 @@ struct ContentView: View {
             onUndo: viewModel.undoLastAction,
             isHintDisabled: !viewModel.state.currentPlayer.isHuman || viewModel.state.status != .playing,
             isHintActive: viewModel.hint != nil,
-            isUndoDisabled: !viewModel.canUndoTurn,
-            showsHelp: $viewModel.showsHelp
+            isUndoDisabled: !viewModel.canUndoTurn
         )
         .frame(maxWidth: .infinity, alignment: .center)
-    }
-
-    private var helpPanel: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text("How to play")
-                .font(.system(size: 14, weight: .bold, design: .rounded))
-                .foregroundColor(.white)
-            Text("Play cards from your stock, hand or discard piles to the shared build piles in ascending order from Ace to Queen. Kings are wild and take on any needed value. End your turn by discarding a card from your hand.")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.75))
-        }
-        .padding()
-        .background(
-            RoundedRectangle(cornerRadius: 18)
-                .fill(Color.white.opacity(0.08))
-        )
-    }
-
-    private func toggleBuildReveal(id: UUID) {
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-            if revealedBuildPileIDs.contains(id) {
-                revealedBuildPileIDs.remove(id)
-            } else {
-                revealedBuildPileIDs.insert(id)
-            }
-        }
-    }
-
-    private func toggleDiscardReveal(for playerID: UUID, pileIndex: Int) {
-        let identifier = DiscardIdentifier(playerID: playerID, pileIndex: pileIndex)
-        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) {
-            if revealedDiscardIdentifiers.contains(identifier) {
-                revealedDiscardIdentifiers.remove(identifier)
-            } else {
-                revealedDiscardIdentifiers.insert(identifier)
-            }
-        }
-    }
-
-    private func revealedDiscardIndices(for playerID: UUID) -> Set<Int> {
-        Set(revealedDiscardIdentifiers.filter { $0.playerID == playerID }.map(\.pileIndex))
     }
 }
 #endif

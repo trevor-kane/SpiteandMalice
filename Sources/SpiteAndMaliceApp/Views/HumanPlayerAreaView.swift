@@ -10,8 +10,6 @@ struct HumanPlayerAreaView: View {
     var onSelectStock: () -> Void
     var onTapDiscard: (Int) -> Void
     var onSelectHandCard: (Int) -> Void
-    var revealedDiscardIndices: Set<Int>
-    var onToggleDiscardReveal: (Int) -> Void
 
     private var selectedDiscardIndex: Int? {
         guard let selection else { return nil }
@@ -35,17 +33,15 @@ struct HumanPlayerAreaView: View {
                     ForEach(Array(player.discardPiles.indices), id: \.self) { index in
                         DiscardPileView(
                             cards: player.discardPiles[index],
-                            title: "Discard \(index + 1)",
+                            title: "Discard",
                             isHighlighted: selectedDiscardIndex == index,
                             isInteractive: true,
-                            action: { onTapDiscard(index) },
-                            isRevealed: revealedDiscardIndices.contains(index),
-                            onRevealToggle: { onToggleDiscardReveal(index) }
+                            action: { onTapDiscard(index) }
                         )
                     }
                 }
             }
-            .frame(maxWidth: .infinity, alignment: .center)
+            .frame(maxWidth: .infinity, alignment: .leading)
 
             HandView(
                 cards: player.hand,
