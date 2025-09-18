@@ -1,6 +1,20 @@
-#if canImport(SwiftUI)
 import Foundation
+#if canImport(SwiftUI)
 import SwiftUI
+#else
+public protocol ObservableObject: AnyObject {}
+
+@propertyWrapper
+public struct Published<Value> {
+    public var wrappedValue: Value
+
+    public init(wrappedValue: Value) {
+        self.wrappedValue = wrappedValue
+    }
+
+    public var projectedValue: Published<Value> { self }
+}
+#endif
 import SpiteAndMaliceCore
 
 @MainActor
@@ -109,6 +123,21 @@ final class GameViewModel: ObservableObject {
             state = GameState.empty()
             statusBanner = "Unable to start game: \(error.localizedDescription)"
         }
+    }
+
+    func loadTestingState(_ newState: GameState) {
+        aiTask?.cancel()
+        pendingAdvanceTask?.cancel()
+        pendingAdvanceTask = nil
+        turnContext = nil
+        turnContextStack.removeAll()
+        undoStack.removeAll()
+        hasPlayedStockThisTurn = false
+        isAITakingTurn = false
+        selection = nil
+        hint = nil
+        state = newState
+        updateStatusBanner()
     }
 
     func selectHandCard(at index: Int) {
@@ -503,7 +532,12 @@ final class GameViewModel: ObservableObject {
             turnContext = nil
             return
         }
-        turnContext = TurnContext(state: state, playerIndex: state.currentPlayerIndex)
+        let opponentUnlocks = opponentRisk(after: state, actingPlayerIndex: state.currentPlayerIndex).unlocksStock
+        turnContext = TurnContext(
+            state: state,
+            playerIndex: state.currentPlayerIndex,
+            startingOpponentCanReachStock: opponentUnlocks
+        )
     }
 
     private func ensureTurnContextIsCurrent() {
@@ -520,7 +554,12 @@ final class GameViewModel: ObservableObject {
            context.playerIndex == state.currentPlayerIndex {
             return
         }
-        turnContext = TurnContext(state: state, playerIndex: state.currentPlayerIndex)
+        let opponentUnlocks = opponentRisk(after: state, actingPlayerIndex: state.currentPlayerIndex).unlocksStock
+        turnContext = TurnContext(
+            state: state,
+            playerIndex: state.currentPlayerIndex,
+            startingOpponentCanReachStock: opponentUnlocks
+        )
     }
 
     private func recordPlayInTurnContext(origin: CardOrigin, card: Card, pileIndex: Int) {
@@ -536,7 +575,12 @@ final class GameViewModel: ObservableObject {
     private func turnContextSnapshot(from state: GameState) -> TurnContext? {
         guard state.status == .playing else { return nil }
         guard state.players.indices.contains(state.currentPlayerIndex) else { return nil }
-        return TurnContext(state: state, playerIndex: state.currentPlayerIndex)
+        let opponentUnlocks = opponentRisk(after: state, actingPlayerIndex: state.currentPlayerIndex).unlocksStock
+        return TurnContext(
+            state: state,
+            playerIndex: state.currentPlayerIndex,
+            startingOpponentCanReachStock: opponentUnlocks
+        )
     }
 
     private func updateUndoAvailability() {
@@ -568,13 +612,13 @@ final class GameViewModel: ObservableObject {
         return card.value == required
     }
 
-    private func bestPlay(forPlayerAt index: Int) -> (origin: CardOrigin, card: Card, pileIndex: Int)? {
+    func bestPlay(forPlayerAt index: Int) -> (origin: CardOrigin, card: Card, pileIndex: Int)? {
         scoredPlayOptions(forPlayerAt: index).first.map { option in
             (option.origin, option.card, option.pileIndex)
         }
     }
 
-    private func bestDiscard(forPlayerAt index: Int) -> (handIndex: Int, discardIndex: Int, card: Card)? {
+    func bestDiscard(forPlayerAt index: Int) -> (handIndex: Int, discardIndex: Int, card: Card)? {
         guard state.players.indices.contains(index) else { return nil }
         let player = state.players[index]
         guard !player.hand.isEmpty else { return nil }
@@ -624,7 +668,12 @@ final class GameViewModel: ObservableObject {
            context.turnIdentifier == state.turnIdentifier {
             return context
         }
-        return TurnContext(state: state, playerIndex: playerIndex)
+        let opponentUnlocks = opponentRisk(after: state, actingPlayerIndex: playerIndex).unlocksStock
+        return TurnContext(
+            state: state,
+            playerIndex: playerIndex,
+            startingOpponentCanReachStock: opponentUnlocks
+        )
     }
 
     private func playCandidates(in state: GameState, for playerIndex: Int) -> [PlayCandidate] {
@@ -844,9 +893,9 @@ final class GameViewModel: ObservableObject {
         case .stock:
             score += 200
         case .hand:
-            score += 30
+            score += 60
         case .discard:
-            score += 40
+            score += 15
         }
 
         if playResult.didCompleteBuild {
@@ -862,8 +911,15 @@ final class GameViewModel: ObservableObject {
             score += 5
         }
 
-        score += Double(continuation.maxTotalPlays) * 6
-        score += Double(continuation.maxHandCardsPlayed) * 3
+        let continuationPlayScore = Double(continuation.maxTotalPlays) * 6
+        let continuationHandScore = Double(continuation.maxHandCardsPlayed) * 3
+        var continuationScore = continuationPlayScore + continuationHandScore
+
+        if candidate.card.isWild && !continuation.canReachStock {
+            continuationScore = -continuationScore
+        }
+
+        score += continuationScore
 
         if continuation.canReachStock {
             score += 80
@@ -880,22 +936,39 @@ final class GameViewModel: ObservableObject {
 
         if candidate.card.isWild {
             if continuation.canReachStock {
-                score += 30
+                score += 65
             } else {
-                score -= 40
+                let penalty: Double
+                switch candidate.origin {
+                case .stock:
+                    penalty = 140
+                case .hand:
+                    penalty = 190
+                case .discard:
+                    penalty = 230
+                }
+                score -= penalty
             }
         }
 
         if risk.unlocksStock {
-            if continuation.canReachStock {
-                score -= 15
-            } else {
-                score -= 85
-            }
+            let basePenalty = continuation.canReachStock ? 90.0 : 240.0
+            let multiplier = candidate.card.isWild ? 1.6 : 1.0
+            score -= basePenalty * multiplier
         }
 
-        if !continuation.canReachStock && !candidate.origin.isStock {
-            score -= Double(context.handCardsPlayed) * 2
+        if !continuation.canReachStock {
+            if context.startingOpponentCanReachStock && !risk.unlocksStock {
+                score += 55
+            }
+            if !candidate.origin.isStock {
+                score -= Double(context.handCardsPlayed) * 2
+                if candidate.origin.isDiscard {
+                    score -= 25
+                } else if candidate.origin.isHand {
+                    score += 12
+                }
+            }
         }
 
         return score
@@ -1045,16 +1118,18 @@ final class GameViewModel: ObservableObject {
         let startingDiscardTops: [Card?]
         let startingStockTop: Card?
         let startingBuildTargets: [CardValue]
+        let startingOpponentCanReachStock: Bool
         private(set) var plays: [PlayRecord]
         private(set) var discards: [DiscardRecord]
 
-        init(state: GameState, playerIndex: Int) {
+        init(state: GameState, playerIndex: Int, startingOpponentCanReachStock: Bool) {
             self.turnIdentifier = state.turnIdentifier
             self.playerIndex = playerIndex
             self.startingHandCount = state.players[playerIndex].hand.count
             self.startingDiscardTops = state.players[playerIndex].discardPiles.map { $0.last }
             self.startingStockTop = state.players[playerIndex].stockTopCard
             self.startingBuildTargets = state.buildPiles.map(\.nextRequiredValue)
+            self.startingOpponentCanReachStock = startingOpponentCanReachStock
             self.plays = []
             self.discards = []
         }
@@ -1102,5 +1177,4 @@ private extension CardOrigin {
         }
     }
 }
-#endif
 
