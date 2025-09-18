@@ -19,7 +19,13 @@ struct PeekingCardStack: View {
         ZStack(alignment: .topLeading) {
             ForEach(Array(visibleCards.enumerated()), id: \.element.id) { index, card in
                 let total = visibleCards.count
-                CardView(card: card, isFaceDown: isFaceDown, scale: cardScale(forIndex: index, totalCount: total))
+                let cardScale = cardScale(forIndex: index, totalCount: total)
+                CardView(card: card, isFaceDown: isFaceDown, scale: cardScale)
+                    .overlay(alignment: .top) {
+                        if !isFaceDown {
+                            peekLabel(for: card, scale: cardScale)
+                        }
+                    }
                     .offset(y: offset(forIndex: index))
                     .shadow(color: Color.black.opacity(shadowOpacity(forIndex: index, totalCount: total)), radius: 6, y: 4)
                     .zIndex(Double(index))
@@ -50,6 +56,20 @@ struct PeekingCardStack: View {
         guard totalCount > 1 else { return 0.2 }
         let depth = totalCount - index - 1
         return Double(0.18 + (CGFloat(depth) * 0.05))
+    }
+
+    private func peekLabel(for card: Card, scale: CGFloat) -> some View {
+        Text(card.displayName)
+            .font(.system(size: 14 * scale, weight: .heavy, design: .rounded))
+            .foregroundColor(.white)
+            .padding(.horizontal, 6 * scale)
+            .padding(.vertical, 2.5 * scale)
+            .background(
+                Capsule(style: .continuous)
+                    .fill(Color.black.opacity(0.55))
+            )
+            .padding(.top, 6 * scale)
+            .opacity(0.95)
     }
 
     private static func spacing(for scale: CGFloat) -> CGFloat {

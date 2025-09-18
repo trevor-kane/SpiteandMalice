@@ -7,7 +7,7 @@ struct DrawPileView: View {
 
     var body: some View {
         VStack(spacing: 10) {
-            ZStack(alignment: .topTrailing) {
+            ZStack {
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
                     .fill(
                         LinearGradient(
@@ -23,9 +23,10 @@ struct DrawPileView: View {
                     .frame(width: 70, height: 98)
 
                 Text("\(drawCount)")
-                    .font(.system(size: 22, weight: .bold, design: .rounded))
+                    .font(.system(size: 24, weight: .bold, design: .rounded))
                     .foregroundColor(.white)
-
+            }
+            .overlay(alignment: .topTrailing) {
                 if recycleCount > 0 {
                     PileBadge {
                         Label("\(recycleCount)", systemImage: "arrow.triangle.2.circlepath")

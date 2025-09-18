@@ -36,6 +36,7 @@ struct HumanPlayerAreaView: View {
                             title: "Discard",
                             isHighlighted: selectedDiscardIndex == index,
                             isInteractive: true,
+                            showsStackWhenMultiple: false,
                             action: { onTapDiscard(index) }
                         )
                     }
@@ -43,12 +44,19 @@ struct HumanPlayerAreaView: View {
             }
             .frame(maxWidth: .infinity, alignment: .center)
 
-            HandView(
-                cards: player.hand,
-                selectedCardID: selection?.card.id,
-                tapAction: onSelectHandCard
-            )
-            .frame(maxWidth: .infinity, alignment: .center)
+            VStack(alignment: .leading, spacing: 8) {
+                Text("Your Hand")
+                    .font(.system(size: 14, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.85))
+
+                HandView(
+                    cards: player.hand,
+                    selectedCardID: selection?.card.id,
+                    tapAction: onSelectHandCard
+                )
+                .frame(maxWidth: .infinity, alignment: .center)
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
         }
         .padding(.vertical, 22)
         .padding(.horizontal, 24)
