@@ -35,6 +35,11 @@ let package = Package(
             name: "SpiteAndMaliceCoreTests",
             dependencies: ["SpiteAndMaliceCore"],
             path: "Tests/SpiteAndMaliceCoreTests"
+        ),
+        .testTarget(
+            name: "SpiteAndMaliceAppTests",
+            dependencies: ["SpiteAndMaliceApp"],
+            path: "Tests/SpiteAndMaliceAppTests"
         )
     ]
 )
