@@ -1,3 +1,14 @@
-*.xcodeproj/xcuserdata/
+# macOS
+.DS_Store
+
+# Xcode user/ephemeral stuff
+*.xcuserstate
+xcuserdata/
+DerivedData/
+*.moved-aside
+*.xccheckout
+*.xcscmblueprint
+
+# SwiftPM / builds (optional but common)
+.swiftpm/
 .build/
-*.xcuserdata/
