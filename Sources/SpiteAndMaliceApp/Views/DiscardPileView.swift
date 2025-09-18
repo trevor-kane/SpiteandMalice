@@ -7,6 +7,7 @@ struct DiscardPileView: View {
     var title: String
     var isHighlighted: Bool = false
     var isInteractive: Bool = false
+    var showsStackWhenMultiple: Bool = true
     var action: (() -> Void)?
 
     var body: some View {
@@ -23,22 +24,9 @@ struct DiscardPileView: View {
     @ViewBuilder
     private var discardContent: some View {
         ZStack(alignment: .topLeading) {
-            if cards.count > 1 {
-                PeekingCardStack(
-                    cards: Array(cards.dropLast()),
-                    isFaceDown: false,
-                    scale: 0.92
-                )
-            }
-
-            if let card = cards.last {
-                interactiveTopCard(card: card)
-                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cards.count))
-            } else {
-                placeholderCard
-            }
+            discardStack
         }
-        .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: cards.count, topScale: 0.95))
+        .frame(height: stackHeight)
     }
 
     @ViewBuilder
@@ -67,6 +55,36 @@ struct DiscardPileView: View {
             CardPlaceholder(title: "Discard")
                 .scaleEffect(0.95)
                 .opacity(isInteractive ? 1 : 0.65)
+        }
+    }
+
+    @ViewBuilder
+    private var discardStack: some View {
+        if let card = cards.last {
+            if showsStackWhenMultiple, cards.count > 1 {
+                let underlying = Array(cards.dropLast())
+                PeekingCardStack(
+                    cards: underlying,
+                    isFaceDown: false,
+                    scale: 0.92
+                )
+
+                interactiveTopCard(card: card)
+                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cards.count, scale: 0.92))
+            } else {
+                interactiveTopCard(card: card)
+            }
+        } else {
+            placeholderCard
+        }
+    }
+
+    private var stackHeight: CGFloat {
+        guard let _ = cards.last else { return 98 * 0.95 }
+        if showsStackWhenMultiple, cards.count > 1 {
+            return PeekingCardStack.totalStackHeight(forTotalCount: cards.count, topScale: 0.95, peekScale: 0.92)
+        } else {
+            return 98 * 0.95
         }
     }
 }
