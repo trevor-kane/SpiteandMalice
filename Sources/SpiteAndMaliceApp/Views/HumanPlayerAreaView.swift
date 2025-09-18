@@ -10,6 +10,7 @@ struct HumanPlayerAreaView: View {
     var onSelectStock: () -> Void
     var onTapDiscard: (Int) -> Void
     var onSelectHandCard: (Int) -> Void
+    var showsContainer: Bool = true
 
     private var selectedDiscardIndex: Int? {
         guard let selection else { return nil }
@@ -18,10 +19,17 @@ struct HumanPlayerAreaView: View {
     }
 
     var body: some View {
-        VStack(spacing: 20) {
-            PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(alignment: .top, spacing: 26) {
+        let content = VStack(spacing: 18) {
+            HStack(alignment: .center, spacing: 16) {
+                PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                Spacer(minLength: 0)
+
+                HandSummaryLabel(count: player.hand.count)
+            }
+
+            HStack(alignment: .top, spacing: 22) {
                 StockPileView(
                     cards: player.stockPile,
                     isFaceDown: false,
@@ -43,27 +51,28 @@ struct HumanPlayerAreaView: View {
             }
             .frame(maxWidth: .infinity, alignment: .center)
 
-            VStack(alignment: .leading, spacing: 8) {
-                Text("Your Hand")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.85))
-
-                HandView(
-                    cards: player.hand,
-                    selectedCardID: selection?.card.id,
-                    tapAction: onSelectHandCard
-                )
-                .frame(maxWidth: .infinity, alignment: .center)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
+            HandView(
+                cards: player.hand,
+                selectedCardID: selection?.card.id,
+                tapAction: onSelectHandCard
+            )
+            .frame(maxWidth: .infinity, alignment: .center)
         }
-        .padding(.vertical, 22)
-        .padding(.horizontal, 24)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.08))
-        )
-        .frame(maxWidth: .infinity, alignment: .center)
+
+        Group {
+            if showsContainer {
+                content
+                    .padding(.vertical, 20)
+                    .padding(.horizontal, 22)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.08))
+                    )
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                content
+            }
+        }
     }
 }
 
@@ -71,6 +80,32 @@ private extension CardOrigin {
     var isStock: Bool {
         if case .stock = self { return true }
         return false
+    }
+}
+
+private struct HandSummaryLabel: View {
+    var count: Int
+
+    var body: some View {
+        VStack(spacing: 4) {
+            Text("Hand")
+                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                .foregroundColor(.white.opacity(0.7))
+
+            Text("\(count)")
+                .font(.system(size: 22, weight: .heavy, design: .rounded))
+                .foregroundColor(.white)
+        }
+        .padding(.horizontal, 14)
+        .padding(.vertical, 10)
+        .background(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 16, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
     }
 }
 #endif

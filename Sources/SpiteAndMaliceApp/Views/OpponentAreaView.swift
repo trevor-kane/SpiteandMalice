@@ -5,12 +5,18 @@ import SpiteAndMaliceCore
 struct OpponentAreaView: View {
     var player: Player
     var isCurrentTurn: Bool
+    var showsContainer: Bool = true
 
     var body: some View {
-        VStack(spacing: 18) {
-            PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
-                .frame(maxWidth: .infinity, alignment: .leading)
-            HStack(alignment: .top, spacing: 26) {
+        let content = VStack(spacing: 16) {
+            HStack(alignment: .center, spacing: 16) {
+                PlayerHeaderView(player: player, isCurrentTurn: isCurrentTurn)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+
+                OpponentHandSummaryView(count: player.hand.count)
+            }
+
+            HStack(alignment: .top, spacing: 22) {
                 StockPileView(
                     cards: player.stockPile,
                     isFaceDown: false,
@@ -32,24 +38,22 @@ struct OpponentAreaView: View {
                 }
             }
             .frame(maxWidth: .infinity, alignment: .center)
-
-            VStack(alignment: .leading, spacing: 8) {
-                Text("\(player.name)'s Hand")
-                    .font(.system(size: 14, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.78))
-
-                OpponentHandSummaryView(count: player.hand.count)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .padding(.vertical, 20)
-        .padding(.horizontal, 22)
-        .background(
-            RoundedRectangle(cornerRadius: 20)
-                .fill(Color.white.opacity(0.05))
-        )
-        .frame(maxWidth: .infinity, alignment: .center)
+
+        Group {
+            if showsContainer {
+                content
+                    .padding(.vertical, 18)
+                    .padding(.horizontal, 22)
+                    .background(
+                        RoundedRectangle(cornerRadius: 20)
+                            .fill(Color.white.opacity(0.05))
+                    )
+                    .frame(maxWidth: .infinity, alignment: .center)
+            } else {
+                content
+            }
+        }
     }
 }
 
@@ -70,7 +74,7 @@ private struct OpponentHandSummaryView: View {
                     RoundedRectangle(cornerRadius: 14, style: .continuous)
                         .stroke(Color.white.opacity(0.25), lineWidth: 1.2)
                 )
-                .frame(width: 70, height: 98)
+                .frame(width: 64, height: 94)
 
             VStack(spacing: 4) {
                 Text("\(count)")

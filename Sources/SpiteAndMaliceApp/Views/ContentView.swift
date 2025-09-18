@@ -27,17 +27,15 @@ struct ContentView: View {
     }
 
     private var mainContent: some View {
-        VStack(alignment: .leading, spacing: 32) {
+        VStack(alignment: .leading, spacing: 24) {
             header
                 .frame(maxWidth: .infinity, alignment: .leading)
 
-            HStack(alignment: .top, spacing: 32) {
+            HStack(alignment: .top, spacing: 24) {
                 activityColumn
 
-                VStack(spacing: 28) {
-                    opponentsSection
-                    centrePlayArea
-                    humanSection
+                VStack(spacing: 20) {
+                    cardTable
                     controlSection
                 }
                 .frame(maxWidth: .infinity, alignment: .center)
@@ -45,9 +43,9 @@ struct ContentView: View {
                 sidebarColumn
             }
         }
-        .padding(.vertical, 48)
-        .padding(.horizontal, 32)
-        .frame(maxWidth: 1360)
+        .padding(.vertical, 36)
+        .padding(.horizontal, 24)
+        .frame(maxWidth: 1200)
         .frame(maxWidth: .infinity, alignment: .top)
     }
 
@@ -56,7 +54,7 @@ struct ContentView: View {
             RecentActivityView(events: viewModel.activityLog())
             Spacer(minLength: 0)
         }
-        .frame(width: 260, alignment: .leading)
+        .frame(width: 228, alignment: .leading)
     }
 
     private var sidebarColumn: some View {
@@ -74,7 +72,7 @@ struct ContentView: View {
 
             Spacer(minLength: 0)
         }
-        .frame(width: 280, alignment: .leading)
+        .frame(width: 244, alignment: .leading)
     }
 
     private var backgroundView: some View {
@@ -98,21 +96,51 @@ struct ContentView: View {
         }
     }
 
+    private var cardTable: some View {
+        let hasOpponents = viewModel.state.players.contains(where: { !$0.isHuman })
+        let hasHumanPlayer = viewModel.state.players.contains(where: { $0.isHuman })
+
+        return VStack(spacing: 20) {
+            if hasOpponents {
+                opponentsSection
+            }
+
+            if hasOpponents {
+                tableDivider
+            }
+
+            sharedStacksSection
+
+            if hasHumanPlayer {
+                tableDivider
+                humanSection
+            }
+        }
+        .padding(.vertical, 24)
+        .padding(.horizontal, 26)
+        .background(
+            RoundedRectangle(cornerRadius: 28)
+                .fill(Color.white.opacity(0.06))
+        )
+        .frame(maxWidth: .infinity, alignment: .center)
+    }
+
     private var opponentsSection: some View {
-        VStack(alignment: .leading, spacing: 18) {
+        VStack(alignment: .leading, spacing: 16) {
             ForEach(Array(viewModel.state.players.enumerated()).filter { !$0.element.isHuman }, id: \.element.id) { item in
                 OpponentAreaView(
                     player: item.element,
-                    isCurrentTurn: viewModel.state.currentPlayerIndex == item.offset
+                    isCurrentTurn: viewModel.state.currentPlayerIndex == item.offset,
+                    showsContainer: false
                 )
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
     }
 
-    private var centrePlayArea: some View {
-        VStack(spacing: 24) {
-            HStack(alignment: .top, spacing: 28) {
+    private var sharedStacksSection: some View {
+        VStack(spacing: 18) {
+            HStack(alignment: .top, spacing: 24) {
                 ForEach(Array(viewModel.state.buildPiles.enumerated()), id: \.0) { index, pile in
                     BuildPileView(
                         pile: pile,
@@ -133,6 +161,12 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, alignment: .center)
     }
 
+    private var tableDivider: some View {
+        Rectangle()
+            .fill(Color.white.opacity(0.12))
+            .frame(height: 1)
+    }
+
     @ViewBuilder
     private var humanSection: some View {
         if let humanIndex = viewModel.state.players.firstIndex(where: { $0.isHuman }) {
@@ -144,7 +178,8 @@ struct ContentView: View {
                 selection: viewModel.selection,
                 onSelectStock: viewModel.selectStockCard,
                 onTapDiscard: { index in viewModel.handleDiscardTap(index) },
-                onSelectHandCard: { index in viewModel.selectHandCard(at: index) }
+                onSelectHandCard: { index in viewModel.selectHandCard(at: index) },
+                showsContainer: false
             )
         }
     }
@@ -159,6 +194,7 @@ struct ContentView: View {
             isUndoDisabled: !viewModel.canUndoTurn
         )
         .frame(maxWidth: .infinity, alignment: .center)
+        .padding(.top, 6)
     }
 }
 #endif
