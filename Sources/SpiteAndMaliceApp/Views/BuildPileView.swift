@@ -8,8 +8,6 @@ struct BuildPileView: View {
     var isActiveTarget: Bool
     var action: (() -> Void)?
 
-    private var cardCount: Int { pile.cards.count }
-
     var body: some View {
         VStack(spacing: 10) {
             pileContent
@@ -24,18 +22,8 @@ struct BuildPileView: View {
     @ViewBuilder
     private var pileContent: some View {
         if let top = pile.topCard {
-            ZStack(alignment: .topLeading) {
-                if cardCount > 1 {
-                    PeekingCardStack(
-                        cards: Array(pile.cards.dropLast().map { $0.card }),
-                        isFaceDown: false,
-                        scale: 0.94
-                    )
-                }
-                interactiveCard(for: top)
-                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cardCount, scale: 0.94))
-            }
-            .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: cardCount, topScale: 1, peekScale: 0.94))
+            interactiveCard(for: top)
+                .frame(height: 98)
         } else {
             placeholderCard
         }
@@ -62,7 +50,7 @@ struct BuildPileView: View {
 
     @ViewBuilder
     private var placeholderCard: some View {
-        let placeholder = CardPlaceholder(title: "Start\nwith 1")
+        let placeholder = CardPlaceholder(title: "Place\nan A")
             .overlay(
                 RoundedRectangle(cornerRadius: 14)
                     .stroke(isActiveTarget ? Color.yellow : Color.white.opacity(0.2), lineWidth: isActiveTarget ? 3 : 1)

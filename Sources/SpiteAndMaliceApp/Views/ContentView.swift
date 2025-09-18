@@ -5,15 +5,12 @@ import SpiteAndMaliceCore
 struct ContentView: View {
     @EnvironmentObject private var viewModel: GameViewModel
 
-    @State private var zoomScale: CGFloat = 1.0
-
     var body: some View {
         let summary = viewModel.gameSummary
         ZStack(alignment: .top) {
             backgroundView
             ScrollView(.vertical, showsIndicators: true) {
                 mainContent
-                    .scaleEffect(zoomScale, anchor: .top)
                     .padding(.top, 16)
                     .frame(maxWidth: .infinity)
             }
@@ -25,11 +22,6 @@ struct ContentView: View {
                     .padding(.horizontal, 32)
                     .transition(.opacity.combined(with: .scale))
             }
-        }
-        .overlay(alignment: .topTrailing) {
-            ZoomControlView(zoomLevel: $zoomScale)
-                .padding(.top, 16)
-                .padding(.trailing, 24)
         }
         .animation(.spring(response: 0.45, dampingFraction: 0.85), value: summary != nil)
     }

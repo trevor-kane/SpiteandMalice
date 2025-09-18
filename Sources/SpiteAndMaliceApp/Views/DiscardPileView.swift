@@ -10,6 +10,8 @@ struct DiscardPileView: View {
     var showsStackWhenMultiple: Bool = true
     var action: (() -> Void)?
 
+    private let stackCardScale: CGFloat = 0.95
+
     var body: some View {
         VStack(spacing: 6) {
             discardContent
@@ -23,7 +25,7 @@ struct DiscardPileView: View {
 
     @ViewBuilder
     private var discardContent: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .top) {
             discardStack
         }
         .frame(height: stackHeight)
@@ -31,7 +33,7 @@ struct DiscardPileView: View {
 
     @ViewBuilder
     private func interactiveTopCard(card: Card) -> some View {
-        let view = CardView(card: card, isHighlighted: isHighlighted, showsGlow: isHighlighted, scale: 0.95)
+        let view = CardView(card: card, isHighlighted: isHighlighted, showsGlow: isHighlighted, scale: stackCardScale)
         if let action {
             Button(action: action) {
                 view
@@ -47,13 +49,13 @@ struct DiscardPileView: View {
         if let action {
             Button(action: action) {
                 CardPlaceholder(title: "Discard")
-                    .scaleEffect(0.95)
+                    .scaleEffect(stackCardScale)
             }
             .buttonStyle(.plain)
             .opacity(isInteractive ? 1 : 0.65)
         } else {
             CardPlaceholder(title: "Discard")
-                .scaleEffect(0.95)
+                .scaleEffect(stackCardScale)
                 .opacity(isInteractive ? 1 : 0.65)
         }
     }
@@ -66,11 +68,11 @@ struct DiscardPileView: View {
                 PeekingCardStack(
                     cards: underlying,
                     isFaceDown: false,
-                    scale: 0.92
+                    scale: stackCardScale
                 )
 
                 interactiveTopCard(card: card)
-                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cards.count, scale: 0.92))
+                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cards.count, scale: stackCardScale))
             } else {
                 interactiveTopCard(card: card)
             }
@@ -80,12 +82,15 @@ struct DiscardPileView: View {
     }
 
     private var stackHeight: CGFloat {
-        guard let _ = cards.last else { return 98 * 0.95 }
+        guard let _ = cards.last else { return 98 * stackCardScale }
         if showsStackWhenMultiple, cards.count > 1 {
-            return PeekingCardStack.totalStackHeight(forTotalCount: cards.count, topScale: 0.95, peekScale: 0.92)
-        } else {
-            return 98 * 0.95
+            return PeekingCardStack.totalStackHeight(
+                forTotalCount: cards.count,
+                topScale: stackCardScale,
+                peekScale: stackCardScale
+            )
         }
+        return 98 * stackCardScale
     }
 }
 #endif

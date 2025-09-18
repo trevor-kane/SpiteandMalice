@@ -5,8 +5,6 @@ import SpiteAndMaliceCore
 struct PeekingCardStack: View {
     static let defaultPeekSpacing: CGFloat = 26
     static let defaultMaxPeekCount: Int = 5
-    static let depthScaleStep: CGFloat = 0.04
-
     var cards: [Card]
     var isFaceDown: Bool
     var scale: CGFloat
@@ -16,14 +14,13 @@ struct PeekingCardStack: View {
     }
 
     var body: some View {
-        ZStack(alignment: .topLeading) {
+        ZStack(alignment: .top) {
             ForEach(Array(visibleCards.enumerated()), id: \.element.id) { index, card in
                 let total = visibleCards.count
-                let cardScale = cardScale(forIndex: index, totalCount: total)
-                CardView(card: card, isFaceDown: isFaceDown, scale: cardScale)
+                CardView(card: card, isFaceDown: isFaceDown, scale: scale)
                     .overlay(alignment: .top) {
                         if !isFaceDown {
-                            peekLabel(for: card, scale: cardScale)
+                            peekLabel(for: card, scale: scale)
                         }
                     }
                     .offset(y: offset(forIndex: index))
@@ -34,7 +31,7 @@ struct PeekingCardStack: View {
         .frame(
             width: stackWidth,
             height: Self.stackHeight(forVisibleCount: visibleCards.count, scale: scale),
-            alignment: .topLeading
+            alignment: .top
         )
         .allowsHitTesting(false)
     }
@@ -43,13 +40,6 @@ struct PeekingCardStack: View {
 
     private func offset(forIndex index: Int) -> CGFloat {
         CGFloat(index) * Self.spacing(for: scale)
-    }
-
-    private func cardScale(forIndex index: Int, totalCount: Int) -> CGFloat {
-        guard totalCount > 1 else { return scale }
-        let depth = totalCount - index - 1
-        let multiplier = max(0.82, 1 - (CGFloat(depth) * Self.depthScaleStep))
-        return scale * multiplier
     }
 
     private func shadowOpacity(forIndex index: Int, totalCount: Int) -> Double {
