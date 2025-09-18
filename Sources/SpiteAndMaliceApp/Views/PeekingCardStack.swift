@@ -3,60 +3,76 @@ import SwiftUI
 import SpiteAndMaliceCore
 
 struct PeekingCardStack: View {
-    static let defaultPeekHeight: CGFloat = 36
-    static let defaultPeekSpacing: CGFloat = 18
+    static let defaultPeekSpacing: CGFloat = 26
     static let defaultMaxPeekCount: Int = 5
+    static let depthScaleStep: CGFloat = 0.04
 
     var cards: [Card]
     var isFaceDown: Bool
     var scale: CGFloat
-    var showsFullTopCard: Bool = false
 
     private var visibleCards: [Card] {
         Array(cards.suffix(Self.defaultMaxPeekCount))
     }
 
     var body: some View {
-        let cardHeight = 98 * scale
-
-        return ZStack(alignment: .topLeading) {
+        ZStack(alignment: .topLeading) {
             ForEach(Array(visibleCards.enumerated()), id: \.element.id) { index, card in
-                let isTopCard = index == visibleCards.indices.last
-                let drawsFullCard = showsFullTopCard && isTopCard
-                CardView(card: card, isFaceDown: isFaceDown, scale: scale)
-                    .mask(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .frame(height: drawsFullCard ? cardHeight : Self.defaultPeekHeight)
-                    )
-                    .offset(y: CGFloat(index) * Self.defaultPeekSpacing)
-                    .shadow(color: Color.black.opacity(drawsFullCard ? 0.28 : 0.16), radius: drawsFullCard ? 8 : 4, y: drawsFullCard ? 6 : 3)
+                let total = visibleCards.count
+                CardView(card: card, isFaceDown: isFaceDown, scale: cardScale(forIndex: index, totalCount: total))
+                    .offset(y: offset(forIndex: index))
+                    .shadow(color: Color.black.opacity(shadowOpacity(forIndex: index, totalCount: total)), radius: 6, y: 4)
                     .zIndex(Double(index))
             }
         }
         .frame(
-            width: 70 * scale,
-            height: Self.stackHeight(forVisibleCount: visibleCards.count, scale: scale, showsFullTopCard: showsFullTopCard),
+            width: stackWidth,
+            height: Self.stackHeight(forVisibleCount: visibleCards.count, scale: scale),
             alignment: .topLeading
         )
         .allowsHitTesting(false)
     }
 
-    static func stackHeight(forVisibleCount visibleCount: Int, scale: CGFloat, showsFullTopCard: Bool) -> CGFloat {
+    private var stackWidth: CGFloat { 70 * scale }
+
+    private func offset(forIndex index: Int) -> CGFloat {
+        CGFloat(index) * Self.spacing(for: scale)
+    }
+
+    private func cardScale(forIndex index: Int, totalCount: Int) -> CGFloat {
+        guard totalCount > 1 else { return scale }
+        let depth = totalCount - index - 1
+        let multiplier = max(0.82, 1 - (CGFloat(depth) * Self.depthScaleStep))
+        return scale * multiplier
+    }
+
+    private func shadowOpacity(forIndex index: Int, totalCount: Int) -> Double {
+        guard totalCount > 1 else { return 0.2 }
+        let depth = totalCount - index - 1
+        return Double(0.18 + (CGFloat(depth) * 0.05))
+    }
+
+    private static func spacing(for scale: CGFloat) -> CGFloat {
+        defaultPeekSpacing * max(scale, 0.82)
+    }
+
+    static func stackHeight(forVisibleCount visibleCount: Int, scale: CGFloat) -> CGFloat {
         guard visibleCount > 0 else { return 0 }
-        let cardHeight = 98 * scale
-        let overlaps = max(visibleCount - 1, 0)
-        let topHeight = showsFullTopCard ? cardHeight : defaultPeekHeight
-        return topHeight + CGFloat(overlaps) * defaultPeekSpacing
+        let spacing = Self.spacing(for: scale)
+        let lastOffset = CGFloat(visibleCount - 1) * spacing
+        let lastCardHeight = 98 * scale
+        return lastOffset + lastCardHeight
     }
 
-    static func topCardOffset(forTotalCount totalCount: Int) -> CGFloat {
-        CGFloat(min(max(totalCount - 1, 0), defaultMaxPeekCount)) * defaultPeekSpacing
-    }
-
-    static func totalStackHeight(forTotalCount totalCount: Int, topScale: CGFloat) -> CGFloat {
-        guard totalCount > 0 else { return 98 * topScale }
+    static func topCardOffset(forTotalCount totalCount: Int, scale: CGFloat) -> CGFloat {
+        guard totalCount > 0 else { return 0 }
         let visible = min(max(totalCount - 1, 0), defaultMaxPeekCount)
-        return (98 * topScale) + CGFloat(visible) * defaultPeekSpacing
+        return CGFloat(visible) * Self.spacing(for: scale)
+    }
+
+    static func totalStackHeight(forTotalCount totalCount: Int, topScale: CGFloat, peekScale: CGFloat) -> CGFloat {
+        guard totalCount > 0 else { return 98 * topScale }
+        return (98 * topScale) + topCardOffset(forTotalCount: totalCount, scale: peekScale)
     }
 }
 #endif

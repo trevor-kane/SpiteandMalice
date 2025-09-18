@@ -33,9 +33,9 @@ struct BuildPileView: View {
                     )
                 }
                 interactiveCard(for: top)
-                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cardCount))
+                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cardCount, scale: 0.94))
             }
-            .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: cardCount, topScale: 1))
+            .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: cardCount, topScale: 1, peekScale: 0.94))
         } else {
             placeholderCard
         }
