@@ -17,11 +17,21 @@ public struct GameEvent: Identifiable, Codable, Equatable {
     public let id: UUID
     public let timestamp: Date
     public let message: String
+    public let turn: Int
+    public let turnIdentifier: Int
 
-    public init(id: UUID = UUID(), timestamp: Date = Date(), message: String) {
+    public init(
+        id: UUID = UUID(),
+        timestamp: Date = Date(),
+        message: String,
+        turn: Int = 0,
+        turnIdentifier: Int = 0
+    ) {
         self.id = id
         self.timestamp = timestamp
         self.message = message
+        self.turn = turn
+        self.turnIdentifier = turnIdentifier
     }
 }
 
@@ -32,6 +42,7 @@ public struct GameState: Codable, Equatable {
     public var recyclePile: [Card]
     public var currentPlayerIndex: Int
     public var turn: Int
+    public var turnIdentifier: Int
     public var status: GameStatus
     public var phase: TurnPhase
     public var activityLog: [GameEvent]
@@ -43,6 +54,7 @@ public struct GameState: Codable, Equatable {
         recyclePile: [Card] = [],
         currentPlayerIndex: Int = 0,
         turn: Int = 1,
+        turnIdentifier: Int = 1,
         status: GameStatus = .idle,
         phase: TurnPhase = .drawing,
         activityLog: [GameEvent] = []
@@ -53,6 +65,7 @@ public struct GameState: Codable, Equatable {
         self.recyclePile = recyclePile
         self.currentPlayerIndex = currentPlayerIndex
         self.turn = turn
+        self.turnIdentifier = turnIdentifier
         self.status = status
         self.phase = phase
         self.activityLog = activityLog
@@ -70,6 +83,7 @@ public extension GameState {
             recyclePile: [],
             currentPlayerIndex: 0,
             turn: 0,
+            turnIdentifier: 0,
             status: .idle,
             phase: .waiting,
             activityLog: []

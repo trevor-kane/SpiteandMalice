@@ -4,20 +4,44 @@ import SpiteAndMaliceCore
 
 struct RecentActivityView: View {
     var events: [GameEvent]
+    var currentTurn: Int
 
-    private static let formatter: RelativeDateTimeFormatter = {
-        let formatter = RelativeDateTimeFormatter()
-        formatter.unitsStyle = .short
-        return formatter
-    }()
+    private var sections: [ActivitySectionModel] {
+        var grouped: [ActivitySectionModel] = []
+
+        for event in events {
+            if let lastIndex = grouped.indices.last, grouped[lastIndex].turnIdentifier == event.turnIdentifier {
+                grouped[lastIndex].events.append(event)
+            } else {
+                grouped.append(
+                    ActivitySectionModel(
+                        turnIdentifier: event.turnIdentifier,
+                        round: event.turn,
+                        events: [event]
+                    )
+                )
+            }
+        }
+
+        return grouped
+    }
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack {
+        VStack(alignment: .leading, spacing: 18) {
+            VStack(alignment: .leading, spacing: 6) {
                 Text("Recent activity")
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
-                    .foregroundColor(.white.opacity(0.9))
-                Spacer()
+                    .foregroundColor(.white.opacity(0.94))
+
+                Text("Turn \(currentTurn)")
+                    .font(.system(size: 12.5, weight: .semibold, design: .rounded))
+                    .foregroundColor(.white.opacity(0.7))
+                    .padding(.horizontal, 12)
+                    .padding(.vertical, 4)
+                    .background(
+                        Capsule(style: .continuous)
+                            .fill(Color.white.opacity(0.08))
+                    )
             }
 
             if events.isEmpty {
@@ -26,8 +50,11 @@ struct RecentActivityView: View {
                     .foregroundColor(.white.opacity(0.65))
             } else {
                 VStack(spacing: 14) {
-                    ForEach(events) { event in
-                        ActivityRow(event: event)
+                    ForEach(Array(sections.enumerated()), id: \.element.turnIdentifier) { index, section in
+                        ActivitySectionView(
+                            section: section,
+                            accentColor: accentColor(for: index)
+                        )
                     }
                 }
             }
@@ -45,40 +72,78 @@ struct RecentActivityView: View {
         .shadow(color: Color.black.opacity(0.25), radius: 18, x: 0, y: 10)
     }
 
-    private struct ActivityRow: View {
-        var event: GameEvent
+    private func accentColor(for index: Int) -> Color {
+        let palette: [Color] = [
+            Color(red: 0.38, green: 0.62, blue: 0.95),
+            Color(red: 0.71, green: 0.43, blue: 0.92),
+            Color(red: 0.46, green: 0.78, blue: 0.67)
+        ]
+        return palette[index % palette.count]
+    }
+
+    private struct ActivitySectionModel: Identifiable {
+        var id = UUID()
+        var turnIdentifier: Int
+        var round: Int
+        var events: [GameEvent]
+    }
+
+    private struct ActivitySectionView: View {
+        var section: ActivitySectionModel
+        var accentColor: Color
 
         var body: some View {
-            HStack(alignment: .top, spacing: 12) {
-                Circle()
-                    .fill(Color.blue.opacity(0.55))
-                    .frame(width: 10, height: 10)
-                    .padding(.top, 6)
+            VStack(alignment: .leading, spacing: 10) {
+                HStack(alignment: .firstTextBaseline, spacing: 10) {
+                    Text(section.turnIdentifier == 0 ? "Game start" : "Turn \(section.turnIdentifier)")
+                        .font(.system(size: 13.5, weight: .semibold, design: .rounded))
+                        .foregroundColor(.white)
 
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(event.message)
-                        .font(.system(size: 13, weight: .medium, design: .rounded))
-                        .foregroundColor(.white.opacity(0.82))
-                        .multilineTextAlignment(.leading)
-                    Text(Self.relativeTime(from: event.timestamp))
-                        .font(.system(size: 11.5, weight: .semibold, design: .rounded))
-                        .foregroundColor(.white.opacity(0.55))
+                    if section.round > 0 {
+                        Text("Round \(section.round)")
+                            .font(.system(size: 11.5, weight: .medium, design: .rounded))
+                            .foregroundColor(.white.opacity(0.78))
+                            .padding(.horizontal, 8)
+                            .padding(.vertical, 2)
+                            .background(
+                                Capsule(style: .continuous)
+                                    .fill(Color.white.opacity(0.12))
+                            )
+                    }
                 }
 
-                Spacer()
-            }
-            .padding(.vertical, 4)
-            .padding(.horizontal, 4)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color.white.opacity(0.02))
-            )
-        }
+                VStack(alignment: .leading, spacing: 8) {
+                    ForEach(section.events.reversed()) { event in
+                        HStack(alignment: .top, spacing: 8) {
+                            Circle()
+                                .fill(Color.white.opacity(0.75))
+                                .frame(width: 6, height: 6)
+                                .padding(.top, 6)
 
-        private static func relativeTime(from date: Date) -> String {
-            let now = Date()
-            let formatted = RecentActivityView.formatter.localizedString(for: date, relativeTo: now)
-            return formatted
+                            Text(event.message)
+                                .font(.system(size: 13, weight: .medium, design: .rounded))
+                                .foregroundColor(.white.opacity(0.88))
+                                .multilineTextAlignment(.leading)
+                        }
+                    }
+                }
+            }
+            .padding(.vertical, 16)
+            .padding(.horizontal, 16)
+            .background(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .fill(
+                        LinearGradient(
+                            colors: [accentColor.opacity(0.28), accentColor.opacity(0.18)],
+                            startPoint: .topLeading,
+                            endPoint: .bottomTrailing
+                        )
+                    )
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 22, style: .continuous)
+                    .stroke(accentColor.opacity(0.5), lineWidth: 1)
+            )
         }
     }
 }

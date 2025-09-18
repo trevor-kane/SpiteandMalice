@@ -104,9 +104,16 @@ public struct GameEngine {
             recyclePile: [],
             currentPlayerIndex: 0,
             turn: 1,
+            turnIdentifier: 1,
             status: .playing,
             phase: .drawing,
-            activityLog: [GameEvent(message: "A new game has begun.")]
+            activityLog: [
+                GameEvent(
+                    message: "A new game has begun.",
+                    turn: 1,
+                    turnIdentifier: 0
+                )
+            ]
         )
         return state
     }
@@ -116,7 +123,13 @@ public struct GameEngine {
         guard state.phase == .drawing else { return }
         let drawn = drawToHand(playerIndex: state.currentPlayerIndex, state: &state)
         if drawn > 0 {
-            state.activityLog.append(GameEvent(message: "\(state.currentPlayer.name) draws \(drawn) card\(drawn == 1 ? "" : "s")."))
+            state.activityLog.append(
+                GameEvent(
+                    message: "\(state.currentPlayer.name) draws \(drawn) card\(drawn == 1 ? "" : "s").",
+                    turn: state.turn,
+                    turnIdentifier: state.turnIdentifier
+                )
+            )
         }
         state.phase = .acting
     }
@@ -207,7 +220,9 @@ public struct GameEngine {
             if drawn > 0 {
                 state.activityLog.append(
                     GameEvent(
-                        message: "\(state.currentPlayer.name) draws \(drawn) fresh card\(drawn == 1 ? "" : "s") to refill their hand."
+                        message: "\(state.currentPlayer.name) draws \(drawn) fresh card\(drawn == 1 ? "" : "s") to refill their hand.",
+                        turn: state.turn,
+                        turnIdentifier: state.turnIdentifier
                     )
                 )
             }
@@ -219,7 +234,13 @@ public struct GameEngine {
             clearedCards = targetPile.reset().map { $0.card }
             state.recyclePile.append(contentsOf: clearedCards)
             didComplete = true
-            state.activityLog.append(GameEvent(message: "Build pile \(pileIndex + 1) was completed."))
+            state.activityLog.append(
+                GameEvent(
+                    message: "Build pile \(pileIndex + 1) was completed.",
+                    turn: state.turn,
+                    turnIdentifier: state.turnIdentifier
+                )
+            )
         }
         state.buildPiles[pileIndex] = targetPile
 
@@ -227,7 +248,13 @@ public struct GameEngine {
         if case .stock = origin {
             if player.stockPile.isEmpty {
                 didEmptyStock = true
-                state.activityLog.append(GameEvent(message: "\(state.currentPlayer.name) emptied their stock pile!"))
+                state.activityLog.append(
+                    GameEvent(
+                        message: "\(state.currentPlayer.name) emptied their stock pile!",
+                        turn: state.turn,
+                        turnIdentifier: state.turnIdentifier
+                    )
+                )
                 state.status = .finished(winner: state.currentPlayer.id)
                 state.phase = .waiting
             }
@@ -240,12 +267,18 @@ public struct GameEngine {
         if sourceCard.isWild, sourceCard.value == .king, resolvedValue != .king {
             state.activityLog.append(
                 GameEvent(
-                    message: "\(state.currentPlayer.name) plays a King as \(resolvedValue.accessibilityLabel) to build pile \(pileIndex + 1)."
+                    message: "\(state.currentPlayer.name) plays a King as \(resolvedValue.accessibilityLabel) to build pile \(pileIndex + 1).",
+                    turn: state.turn,
+                    turnIdentifier: state.turnIdentifier
                 )
             )
         } else {
             state.activityLog.append(
-                GameEvent(message: "\(state.currentPlayer.name) plays \(sourceCard.displayName) to build pile \(pileIndex + 1).")
+                GameEvent(
+                    message: "\(state.currentPlayer.name) plays \(sourceCard.displayName) to build pile \(pileIndex + 1).",
+                    turn: state.turn,
+                    turnIdentifier: state.turnIdentifier
+                )
             )
         }
 
@@ -275,7 +308,13 @@ public struct GameEngine {
         player.cardsDiscarded += 1
         state.players[state.currentPlayerIndex] = player
         state.phase = .waiting
-        state.activityLog.append(GameEvent(message: "\(player.name) discards \(card.displayName) to pile \(discardIndex + 1)."))
+        state.activityLog.append(
+            GameEvent(
+                message: "\(player.name) discards \(card.displayName) to pile \(discardIndex + 1).",
+                turn: state.turn,
+                turnIdentifier: state.turnIdentifier
+            )
+        )
         return DiscardResult(discardedCard: card, toPileIndex: discardIndex)
     }
 
@@ -283,6 +322,7 @@ public struct GameEngine {
         guard state.status == .playing else { return }
         state.currentPlayerIndex = (state.currentPlayerIndex + 1) % state.players.count
         state.turn += state.currentPlayerIndex == 0 ? 1 : 0
+        state.turnIdentifier += 1
         state.phase = .drawing
     }
 
@@ -292,7 +332,13 @@ public struct GameEngine {
             state.drawPile = state.recyclePile
             state.recyclePile.removeAll()
             state.drawPile.shuffle(using: &rng)
-            state.activityLog.append(GameEvent(message: "The draw pile has been refreshed."))
+            state.activityLog.append(
+                GameEvent(
+                    message: "The draw pile has been refreshed.",
+                    turn: state.turn,
+                    turnIdentifier: state.turnIdentifier
+                )
+            )
         }
     }
 

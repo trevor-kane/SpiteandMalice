@@ -11,7 +11,7 @@ struct ContentView: View {
             backgroundView
             ScrollView(.vertical, showsIndicators: true) {
                 mainContent
-                    .padding(.top, 16)
+                    .padding(.top, 12)
                     .frame(maxWidth: .infinity)
             }
             .blur(radius: summary == nil ? 0 : 8)
@@ -27,34 +27,34 @@ struct ContentView: View {
     }
 
     private var mainContent: some View {
-        VStack(alignment: .leading, spacing: 24) {
-            header
-                .frame(maxWidth: .infinity, alignment: .leading)
+        HStack(alignment: .top, spacing: 24) {
+            primaryColumn
 
-            HStack(alignment: .top, spacing: 24) {
-                activityColumn
-
-                VStack(spacing: 20) {
-                    cardTable
-                    controlSection
-                }
+            cardTable
                 .frame(maxWidth: .infinity, alignment: .center)
 
-                sidebarColumn
-            }
+            sidebarColumn
         }
-        .padding(.vertical, 36)
+        .padding(.vertical, 32)
         .padding(.horizontal, 24)
         .frame(maxWidth: 1200)
         .frame(maxWidth: .infinity, alignment: .top)
     }
 
-    private var activityColumn: some View {
+    private var primaryColumn: some View {
         VStack(alignment: .leading, spacing: 20) {
-            RecentActivityView(events: viewModel.activityLog())
+            titlePanel
+
+            controlsPanel
+
+            RecentActivityView(
+                events: viewModel.activityLog(),
+                currentTurn: viewModel.state.turn
+            )
+
             Spacer(minLength: 0)
         }
-        .frame(width: 228, alignment: .leading)
+        .frame(width: 280, alignment: .leading)
     }
 
     private var sidebarColumn: some View {
@@ -84,16 +84,40 @@ struct ContentView: View {
         .ignoresSafeArea()
     }
 
-    private var header: some View {
-        VStack(alignment: .leading, spacing: 6) {
+    private var titlePanel: some View {
+        VStack(alignment: .leading, spacing: 12) {
             Text("Spite & Malice")
-                .font(.system(size: 42, weight: .heavy, design: .rounded))
+                .font(.system(size: 40, weight: .heavy, design: .rounded))
                 .foregroundColor(.white)
-            Text(viewModel.statusBanner)
-                .font(.system(size: 17, weight: .medium, design: .rounded))
-                .foregroundColor(.white.opacity(0.9))
-                .textCase(nil)
+
+            Capsule()
+                .fill(Color.white.opacity(0.35))
+                .frame(width: 64, height: 4)
+
+            Text("Classic card rivalry, reimagined")
+                .font(.system(size: 14, weight: .medium, design: .rounded))
+                .foregroundColor(.white.opacity(0.8))
         }
+        .padding(.vertical, 26)
+        .padding(.horizontal, 24)
+        .background(
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .fill(
+                    LinearGradient(
+                        colors: [
+                            Color(red: 0.21, green: 0.3, blue: 0.62),
+                            Color(red: 0.37, green: 0.23, blue: 0.58)
+                        ],
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 30, style: .continuous)
+                .stroke(Color.white.opacity(0.22), lineWidth: 1.1)
+        )
+        .shadow(color: Color.black.opacity(0.3), radius: 18, x: 0, y: 12)
     }
 
     private var cardTable: some View {
@@ -161,6 +185,27 @@ struct ContentView: View {
         .frame(maxWidth: .infinity, alignment: .center)
     }
 
+    private var controlsPanel: some View {
+        ControlPanelView(
+            onNewGame: { viewModel.startNewGame() },
+            onHint: viewModel.provideHint,
+            onUndo: viewModel.undoLastAction,
+            isHintDisabled: !viewModel.state.currentPlayer.isHuman || viewModel.state.status != .playing,
+            isHintPinned: viewModel.isHintPinned,
+            isUndoDisabled: !viewModel.canUndoTurn
+        )
+        .padding(.vertical, 18)
+        .padding(.horizontal, 20)
+        .background(
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .fill(Color.white.opacity(0.08))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 26, style: .continuous)
+                .stroke(Color.white.opacity(0.18), lineWidth: 1)
+        )
+    }
+
     private var tableDivider: some View {
         Rectangle()
             .fill(Color.white.opacity(0.12))
@@ -184,18 +229,6 @@ struct ContentView: View {
         }
     }
 
-    private var controlSection: some View {
-        ControlPanelView(
-            onNewGame: { viewModel.startNewGame() },
-            onHint: viewModel.provideHint,
-            onUndo: viewModel.undoLastAction,
-            isHintDisabled: !viewModel.state.currentPlayer.isHuman || viewModel.state.status != .playing,
-            isHintPinned: viewModel.isHintPinned,
-            isUndoDisabled: !viewModel.canUndoTurn
-        )
-        .frame(maxWidth: .infinity, alignment: .center)
-        .padding(.top, 6)
-    }
 }
 #endif
 

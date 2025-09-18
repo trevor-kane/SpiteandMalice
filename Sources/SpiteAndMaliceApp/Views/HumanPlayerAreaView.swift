@@ -26,7 +26,17 @@ struct HumanPlayerAreaView: View {
 
                 Spacer(minLength: 0)
 
-                HandSummaryLabel(count: player.hand.count)
+                PlayerHandSummaryView(
+                    title: "Hand",
+                    count: player.hand.count,
+                    gradientColors: [
+                        Color(red: 0.27, green: 0.51, blue: 0.93).opacity(0.9),
+                        Color(red: 0.18, green: 0.36, blue: 0.77).opacity(0.92)
+                    ],
+                    borderColor: Color.white.opacity(0.22),
+                    titleColor: Color.white.opacity(0.75),
+                    countColor: .white
+                )
             }
 
             HStack(alignment: .top, spacing: 22) {
@@ -66,7 +76,7 @@ struct HumanPlayerAreaView: View {
                     .padding(.horizontal, 22)
                     .background(
                         RoundedRectangle(cornerRadius: 20)
-                            .fill(Color.white.opacity(0.08))
+                            .fill(Color.blue.opacity(0.14))
                     )
                     .frame(maxWidth: .infinity, alignment: .center)
             } else {
@@ -80,32 +90,6 @@ private extension CardOrigin {
     var isStock: Bool {
         if case .stock = self { return true }
         return false
-    }
-}
-
-private struct HandSummaryLabel: View {
-    var count: Int
-
-    var body: some View {
-        VStack(spacing: 4) {
-            Text("Hand")
-                .font(.system(size: 12, weight: .semibold, design: .rounded))
-                .foregroundColor(.white.opacity(0.7))
-
-            Text("\(count)")
-                .font(.system(size: 22, weight: .heavy, design: .rounded))
-                .foregroundColor(.white)
-        }
-        .padding(.horizontal, 14)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .fill(Color.white.opacity(0.08))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 16, style: .continuous)
-                .stroke(Color.white.opacity(0.18), lineWidth: 1)
-        )
     }
 }
 #endif
