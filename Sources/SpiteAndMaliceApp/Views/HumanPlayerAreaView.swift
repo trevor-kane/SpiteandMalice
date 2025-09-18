@@ -36,7 +36,6 @@ struct HumanPlayerAreaView: View {
                             title: "Discard",
                             isHighlighted: selectedDiscardIndex == index,
                             isInteractive: true,
-                            showsStackWhenMultiple: false,
                             action: { onTapDiscard(index) }
                         )
                     }

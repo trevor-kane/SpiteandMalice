@@ -61,7 +61,7 @@ struct HintOverlayView: View {
                 }
             }
         }
-        .padding(.horizontal, 22)
+        .padding(.horizontal, 24)
         .padding(.vertical, 20)
         .background(
             RoundedRectangle(cornerRadius: 26, style: .continuous)

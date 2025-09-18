@@ -47,12 +47,6 @@ struct CardView: View {
             }
         }
         .frame(width: size.width, height: size.height)
-        .overlay(alignment: .topLeading) {
-            if usesResolvedOverride {
-                KingBadge()
-                    .offset(x: 8, y: 8)
-            }
-        }
         .contentShape(RoundedRectangle(cornerRadius: 16, style: .continuous))
         .animation(.easeInOut(duration: 0.2), value: isSelected)
     }
@@ -122,21 +116,4 @@ struct CardPlaceholder: View {
     }
 }
 
-private struct KingBadge: View {
-    var body: some View {
-        HStack(spacing: 4) {
-            Image(systemName: "crown.fill")
-                .font(.system(size: 13, weight: .bold))
-            Text("King")
-                .font(.system(size: 11, weight: .semibold, design: .rounded))
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .foregroundColor(.white)
-        .background(
-            Capsule(style: .continuous)
-                .fill(Color.black.opacity(0.55))
-        )
-    }
-}
 #endif
