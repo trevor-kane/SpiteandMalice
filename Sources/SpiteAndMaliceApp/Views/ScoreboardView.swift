@@ -80,6 +80,8 @@ private struct ScoreboardPlayerCard: View {
                     .background(
                         Capsule().fill(player.isHuman ? Color.blue.opacity(0.45) : Color.purple.opacity(0.4))
                     )
+                    .lineLimit(1)
+                    .fixedSize(horizontal: true, vertical: false)
                 Spacer()
                 if isCurrent {
                     Label("Active", systemImage: "flame.fill")

@@ -72,7 +72,7 @@ struct ContentView: View {
 
             Spacer(minLength: 0)
         }
-        .frame(width: 244, alignment: .leading)
+        .frame(width: 280, alignment: .leading)
     }
 
     private var backgroundView: some View {
@@ -194,6 +194,7 @@ struct ContentView: View {
             isHintPinned: viewModel.isHintPinned,
             isUndoDisabled: !viewModel.canUndoTurn
         )
+        .frame(maxWidth: .infinity, alignment: .leading)
         .padding(.vertical, 18)
         .padding(.horizontal, 20)
         .background(

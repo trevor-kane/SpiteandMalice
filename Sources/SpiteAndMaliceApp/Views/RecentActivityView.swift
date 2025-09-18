@@ -29,7 +29,7 @@ struct RecentActivityView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             VStack(alignment: .leading, spacing: 6) {
-                Text("Recent activity")
+                Text("Recent Activity")
                     .font(.system(size: 16, weight: .semibold, design: .rounded))
                     .foregroundColor(.white.opacity(0.94))
 

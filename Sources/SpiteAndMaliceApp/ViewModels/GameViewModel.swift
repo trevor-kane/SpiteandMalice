@@ -358,9 +358,8 @@ final class GameViewModel: ObservableObject {
             return
         }
 
-        if let payload = hintPayload(for: humanIndex) {
-            hint = payload.hint
-            selection = payload.selection
+        if let updatedHint = hintPayload(for: humanIndex) {
+            hint = updatedHint
         } else {
             hint = Hint(
                 message: "No plays available right now. Discard to set up your next turn.",
@@ -368,11 +367,10 @@ final class GameViewModel: ObservableObject {
                 suggestedPileIndex: nil,
                 recommendations: []
             )
-            selection = nil
         }
     }
 
-    private func hintPayload(for playerIndex: Int) -> (hint: Hint, selection: CardSelection?)? {
+    private func hintPayload(for playerIndex: Int) -> Hint? {
         let rankedPlays = scoredPlayOptions(forPlayerAt: playerIndex)
 
         if let bestPlay = rankedPlays.first {
@@ -382,28 +380,21 @@ final class GameViewModel: ObservableObject {
                     detail: recommendationDescription(for: option)
                 )
             })
-            let hint = Hint(
+            return Hint(
                 message: playMessage(for: bestPlay),
                 suggestedOrigin: bestPlay.origin,
                 suggestedPileIndex: bestPlay.pileIndex,
                 recommendations: recommendations
             )
-            let selection = CardSelection(origin: bestPlay.origin, card: bestPlay.card)
-            return (hint, selection)
         }
 
         if let discardSuggestion = bestDiscard(forPlayerAt: playerIndex) {
-            let hint = Hint(
+            return Hint(
                 message: "No plays available. Discard \(discardSuggestion.card.displayName) to \(discardPileDescription(for: discardSuggestion.discardIndex)).",
                 suggestedOrigin: .hand(playerIndex: playerIndex, handIndex: discardSuggestion.handIndex),
                 suggestedPileIndex: nil,
                 recommendations: []
             )
-            let selection = CardSelection(
-                origin: .hand(playerIndex: playerIndex, handIndex: discardSuggestion.handIndex),
-                card: discardSuggestion.card
-            )
-            return (hint, selection)
         }
 
         return nil
