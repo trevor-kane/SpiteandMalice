@@ -88,6 +88,8 @@ private struct ScoreboardPlayerCard: View {
                         .padding(.vertical, 4)
                         .background(Capsule().fill(Color.yellow.opacity(0.45)))
                         .foregroundColor(.white)
+                        .lineLimit(1)
+                        .fixedSize(horizontal: true, vertical: false)
                 }
             }
 

@@ -10,19 +10,26 @@ struct ControlPanelView: View {
     var isUndoDisabled: Bool
 
     var body: some View {
-        HStack(spacing: 16) {
+        VStack(alignment: .leading, spacing: 14) {
             Button(action: onNewGame) {
                 Label("New Game", systemImage: "arrow.counterclockwise.circle")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
+            .controlSize(.large)
 
-            hintButton
+            HStack(spacing: 12) {
+                hintButton
+                    .frame(maxWidth: .infinity)
 
-            Button(action: onUndo) {
-                Label("Undo Move", systemImage: "arrow.uturn.backward")
+                Button(action: onUndo) {
+                    Label("Undo Move", systemImage: "arrow.uturn.backward")
+                        .frame(maxWidth: .infinity)
+                }
+                .buttonStyle(.bordered)
+                .controlSize(.large)
+                .disabled(isUndoDisabled)
             }
-            .buttonStyle(.bordered)
-            .disabled(isUndoDisabled)
         }
     }
 
@@ -31,14 +38,18 @@ struct ControlPanelView: View {
         if isHintPinned {
             Button(action: onHint) {
                 Label("Hint", systemImage: "lightbulb.fill")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.borderedProminent)
             .tint(Color.yellow.opacity(0.85))
+            .controlSize(.large)
         } else {
             Button(action: onHint) {
                 Label("Hint", systemImage: "lightbulb")
+                    .frame(maxWidth: .infinity)
             }
             .buttonStyle(.bordered)
+            .controlSize(.large)
             .disabled(isHintDisabled)
         }
     }
