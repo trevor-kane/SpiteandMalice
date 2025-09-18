@@ -18,6 +18,9 @@ struct DiscardPileView: View {
             Text(title)
                 .font(.system(size: 13, weight: .medium, design: .rounded))
                 .foregroundColor(.white.opacity(0.75))
+                .lineLimit(1)
+                .fixedSize(horizontal: true, vertical: false)
+                .frame(minWidth: 64)
         }
         .opacity(isInteractive ? 1 : 0.9)
         .animation(.spring(response: 0.35, dampingFraction: 0.85), value: cards.count)
