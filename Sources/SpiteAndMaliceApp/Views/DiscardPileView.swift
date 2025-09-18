@@ -33,12 +33,12 @@ struct DiscardPileView: View {
 
             if let card = cards.last {
                 interactiveTopCard(card: card)
-                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cards.count))
+                    .offset(y: PeekingCardStack.topCardOffset(forTotalCount: cards.count, scale: 0.92))
             } else {
                 placeholderCard
             }
         }
-        .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: cards.count, topScale: 0.95))
+        .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: cards.count, topScale: 0.95, peekScale: 0.92))
     }
 
     @ViewBuilder

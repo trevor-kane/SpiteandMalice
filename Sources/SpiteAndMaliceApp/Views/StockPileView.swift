@@ -17,7 +17,7 @@ struct StockPileView: View {
                 stockContent
                     .accessibilityLabel(Text(accessibilityLabel))
             }
-            .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: remainingCount, topScale: 1))
+            .frame(height: PeekingCardStack.totalStackHeight(forTotalCount: remainingCount, topScale: 1, peekScale: 0.98))
             .overlay(alignment: .topTrailing) {
                 countIndicator
                     .allowsHitTesting(false)
@@ -42,7 +42,7 @@ struct StockPileView: View {
             }
 
             interactiveCard(for: card)
-                .offset(y: PeekingCardStack.topCardOffset(forTotalCount: remainingCount))
+                .offset(y: PeekingCardStack.topCardOffset(forTotalCount: remainingCount, scale: 0.98))
         } else {
             placeholderCard
                 .frame(height: 98)
